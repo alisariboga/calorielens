@@ -1,0 +1,100 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String
+  createdAt    DateTime  @default(now())
+  
+  profile      Profile?
+  meals        Meal[]
+  debts        Debt[]
+}
+
+model Profile {
+  id                  String   @id @default(uuid())
+  userId              String   @unique
+  sex                 String   // 'male' | 'female'
+  age                 Int
+  heightCm            Int
+  weightKg            Float
+  activityLevel       String   // 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active'
+  goalRateKgPerWeek   Float
+  bmr                 Float
+  tdee                Float
+  baseTargetCalories  Float
+  updatedAt           DateTime @updatedAt
+  
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model FoodItem {
+  id               String     @id @default(uuid())
+  name             String
+  caloriesPer100g  Float
+  proteinPer100g   Float
+  carbsPer100g     Float
+  fatPer100g       Float
+  defaultServingG  Float
+  
+  mealItems        MealItem[]
+  
+  @@index([name])
+}
+
+model Meal {
+  id        String   @id @default(uuid())
+  userId    String
+  dateTime  DateTime
+  mealType  String   // 'breakfast' | 'lunch' | 'dinner' | 'snack'
+  notes     String?
+  imagePath String?
+  method    String   // 'photo' | 'text'
+  createdAt DateTime @default(now())
+  
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     MealItem[]
+  
+  @@index([userId, dateTime])
+}
+
+model MealItem {
+  id         String  @id @default(uuid())
+  mealId     String
+  foodItemId String?
+  name       String
+  quantityG  Float
+  calories   Float
+  protein    Float
+  carbs      Float
+  fat        Float
+  
+  meal       Meal     @relation(fields: [mealId], references: [id], onDelete: Cascade)
+  foodItem   FoodItem? @relation(fields: [foodItemId], references: [id])
+}
+
+model Debt {
+  id                     String   @id @default(uuid())
+  userId                 String
+  createdDate            DateTime @default(now())
+  totalCalories          Float
+  remainingCalories      Float
+  startDate              DateTime
+  endDate                DateTime
+  dailyPaybackCalories   Float
+  status                 String   @default("active") // 'active' | 'completed'
+  
+  user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId, status, startDate])
+}
