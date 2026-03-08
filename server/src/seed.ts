@@ -178,6 +178,122 @@ const foods = [
   { name: 'Hummus', caloriesPer100g: 166, proteinPer100g: 8, carbsPer100g: 14, fatPer100g: 10, defaultServingG: 30 },
   { name: 'Guacamole', caloriesPer100g: 160, proteinPer100g: 2, carbsPer100g: 9, fatPer100g: 15, defaultServingG: 30 },
   { name: 'Salsa', caloriesPer100g: 36, proteinPer100g: 1.5, carbsPer100g: 8, fatPer100g: 0.2, defaultServingG: 30 },
+
+  // More Proteins - Meat
+  { name: 'Lamb Chop', caloriesPer100g: 294, proteinPer100g: 25, carbsPer100g: 0, fatPer100g: 21, defaultServingG: 150 },
+  { name: 'Beef Stew', caloriesPer100g: 120, proteinPer100g: 12, carbsPer100g: 8, fatPer100g: 4, defaultServingG: 250 },
+  { name: 'Beef Jerky', caloriesPer100g: 336, proteinPer100g: 33, carbsPer100g: 22, fatPer100g: 12, defaultServingG: 30 },
+  { name: 'Pepperoni', caloriesPer100g: 494, proteinPer100g: 20, carbsPer100g: 2, fatPer100g: 44, defaultServingG: 30 },
+  { name: 'Salami', caloriesPer100g: 378, proteinPer100g: 22, carbsPer100g: 1, fatPer100g: 31, defaultServingG: 30 },
+  { name: 'Deli Turkey', caloriesPer100g: 104, proteinPer100g: 17, carbsPer100g: 2, fatPer100g: 3, defaultServingG: 60 },
+
+  // More Seafood
+  { name: 'Sardines (canned)', caloriesPer100g: 208, proteinPer100g: 25, carbsPer100g: 0, fatPer100g: 11, defaultServingG: 90 },
+  { name: 'Crab (cooked)', caloriesPer100g: 97, proteinPer100g: 19, carbsPer100g: 0, fatPer100g: 2, defaultServingG: 100 },
+  { name: 'Lobster (cooked)', caloriesPer100g: 98, proteinPer100g: 20, carbsPer100g: 1.3, fatPer100g: 0.6, defaultServingG: 150 },
+  { name: 'Scallops', caloriesPer100g: 111, proteinPer100g: 20, carbsPer100g: 5, fatPer100g: 0.8, defaultServingG: 100 },
+  { name: 'Halibut', caloriesPer100g: 111, proteinPer100g: 23, carbsPer100g: 0, fatPer100g: 2.3, defaultServingG: 150 },
+  { name: 'Tuna Steak', caloriesPer100g: 184, proteinPer100g: 30, carbsPer100g: 0, fatPer100g: 6, defaultServingG: 150 },
+
+  // More Dairy
+  { name: 'Cream Cheese', caloriesPer100g: 342, proteinPer100g: 6, carbsPer100g: 4, fatPer100g: 34, defaultServingG: 30 },
+  { name: 'Sour Cream', caloriesPer100g: 193, proteinPer100g: 2.4, carbsPer100g: 4.6, fatPer100g: 19, defaultServingG: 30 },
+  { name: 'Heavy Cream', caloriesPer100g: 345, proteinPer100g: 2.1, carbsPer100g: 2.8, fatPer100g: 37, defaultServingG: 30 },
+  { name: 'Feta Cheese', caloriesPer100g: 264, proteinPer100g: 14, carbsPer100g: 4, fatPer100g: 21, defaultServingG: 30 },
+  { name: 'Ricotta Cheese', caloriesPer100g: 174, proteinPer100g: 11, carbsPer100g: 3, fatPer100g: 13, defaultServingG: 60 },
+  { name: 'Brie', caloriesPer100g: 334, proteinPer100g: 21, carbsPer100g: 0.5, fatPer100g: 28, defaultServingG: 30 },
+  { name: 'Kefir', caloriesPer100g: 52, proteinPer100g: 3.5, carbsPer100g: 4.8, fatPer100g: 1, defaultServingG: 240 },
+
+  // More Vegetables
+  { name: 'Celery', caloriesPer100g: 16, proteinPer100g: 0.7, carbsPer100g: 3, fatPer100g: 0.2, defaultServingG: 100 },
+  { name: 'Beets', caloriesPer100g: 43, proteinPer100g: 1.6, carbsPer100g: 10, fatPer100g: 0.2, defaultServingG: 100 },
+  { name: 'Artichoke', caloriesPer100g: 47, proteinPer100g: 3.3, carbsPer100g: 11, fatPer100g: 0.2, defaultServingG: 120 },
+  { name: 'Brussels Sprouts', caloriesPer100g: 43, proteinPer100g: 3.4, carbsPer100g: 9, fatPer100g: 0.3, defaultServingG: 100 },
+  { name: 'Eggplant', caloriesPer100g: 25, proteinPer100g: 1, carbsPer100g: 6, fatPer100g: 0.2, defaultServingG: 100 },
+  { name: 'Leek', caloriesPer100g: 61, proteinPer100g: 1.5, carbsPer100g: 14, fatPer100g: 0.3, defaultServingG: 100 },
+  { name: 'Radish', caloriesPer100g: 16, proteinPer100g: 0.7, carbsPer100g: 3.4, fatPer100g: 0.1, defaultServingG: 100 },
+  { name: 'Bok Choy', caloriesPer100g: 13, proteinPer100g: 1.5, carbsPer100g: 2.2, fatPer100g: 0.2, defaultServingG: 100 },
+  { name: 'Arugula', caloriesPer100g: 25, proteinPer100g: 2.6, carbsPer100g: 3.7, fatPer100g: 0.7, defaultServingG: 50 },
+
+  // More Fruits
+  { name: 'Kiwi', caloriesPer100g: 61, proteinPer100g: 1.1, carbsPer100g: 15, fatPer100g: 0.5, defaultServingG: 75 },
+  { name: 'Cherries', caloriesPer100g: 63, proteinPer100g: 1.1, carbsPer100g: 16, fatPer100g: 0.2, defaultServingG: 100 },
+  { name: 'Raspberries', caloriesPer100g: 52, proteinPer100g: 1.2, carbsPer100g: 12, fatPer100g: 0.7, defaultServingG: 100 },
+  { name: 'Pomegranate', caloriesPer100g: 83, proteinPer100g: 1.7, carbsPer100g: 19, fatPer100g: 1.2, defaultServingG: 100 },
+  { name: 'Pear', caloriesPer100g: 57, proteinPer100g: 0.4, carbsPer100g: 15, fatPer100g: 0.1, defaultServingG: 170 },
+  { name: 'Plum', caloriesPer100g: 46, proteinPer100g: 0.7, carbsPer100g: 11, fatPer100g: 0.3, defaultServingG: 80 },
+  { name: 'Grapefruit', caloriesPer100g: 42, proteinPer100g: 0.8, carbsPer100g: 11, fatPer100g: 0.1, defaultServingG: 150 },
+  { name: 'Lychee', caloriesPer100g: 66, proteinPer100g: 0.8, carbsPer100g: 17, fatPer100g: 0.4, defaultServingG: 100 },
+  { name: 'Coconut (fresh)', caloriesPer100g: 354, proteinPer100g: 3.3, carbsPer100g: 15, fatPer100g: 33, defaultServingG: 40 },
+
+  // Indian Dishes
+  { name: 'Chicken Tikka Masala', caloriesPer100g: 150, proteinPer100g: 14, carbsPer100g: 8, fatPer100g: 7, defaultServingG: 250 },
+  { name: 'Dal (lentil curry)', caloriesPer100g: 90, proteinPer100g: 5, carbsPer100g: 14, fatPer100g: 2, defaultServingG: 200 },
+  { name: 'Naan', caloriesPer100g: 317, proteinPer100g: 9, carbsPer100g: 55, fatPer100g: 7, defaultServingG: 90 },
+  { name: 'Basmati Rice (cooked)', caloriesPer100g: 121, proteinPer100g: 2.5, carbsPer100g: 27, fatPer100g: 0.2, defaultServingG: 150 },
+  { name: 'Paneer', caloriesPer100g: 265, proteinPer100g: 18, carbsPer100g: 3, fatPer100g: 20, defaultServingG: 100 },
+  { name: 'Samosa', caloriesPer100g: 262, proteinPer100g: 5, carbsPer100g: 30, fatPer100g: 14, defaultServingG: 60 },
+  { name: 'Biryani (chicken)', caloriesPer100g: 160, proteinPer100g: 10, carbsPer100g: 20, fatPer100g: 5, defaultServingG: 300 },
+  { name: 'Palak Paneer', caloriesPer100g: 145, proteinPer100g: 7, carbsPer100g: 6, fatPer100g: 11, defaultServingG: 200 },
+
+  // Mediterranean
+  { name: 'Falafel', caloriesPer100g: 333, proteinPer100g: 13, carbsPer100g: 32, fatPer100g: 18, defaultServingG: 100 },
+  { name: 'Tzatziki', caloriesPer100g: 65, proteinPer100g: 4, carbsPer100g: 4, fatPer100g: 4, defaultServingG: 60 },
+  { name: 'Tabbouleh', caloriesPer100g: 70, proteinPer100g: 2, carbsPer100g: 12, fatPer100g: 2, defaultServingG: 100 },
+  { name: 'Shawarma (chicken)', caloriesPer100g: 195, proteinPer100g: 16, carbsPer100g: 12, fatPer100g: 9, defaultServingG: 200 },
+  { name: 'Greek Salad', caloriesPer100g: 70, proteinPer100g: 2, carbsPer100g: 4, fatPer100g: 5, defaultServingG: 200 },
+  { name: 'Dolma (stuffed grape leaf)', caloriesPer100g: 140, proteinPer100g: 3, carbsPer100g: 16, fatPer100g: 7, defaultServingG: 60 },
+
+  // Italian
+  { name: 'Lasagna', caloriesPer100g: 135, proteinPer100g: 8, carbsPer100g: 13, fatPer100g: 6, defaultServingG: 250 },
+  { name: 'Risotto', caloriesPer100g: 133, proteinPer100g: 3.5, carbsPer100g: 23, fatPer100g: 3, defaultServingG: 250 },
+  { name: 'Gnocchi', caloriesPer100g: 130, proteinPer100g: 3.2, carbsPer100g: 28, fatPer100g: 0.5, defaultServingG: 200 },
+  { name: 'Bruschetta', caloriesPer100g: 196, proteinPer100g: 5, carbsPer100g: 28, fatPer100g: 7, defaultServingG: 80 },
+  { name: 'Pesto Sauce', caloriesPer100g: 490, proteinPer100g: 11, carbsPer100g: 7, fatPer100g: 48, defaultServingG: 30 },
+  { name: 'Marinara Sauce', caloriesPer100g: 54, proteinPer100g: 1.5, carbsPer100g: 9, fatPer100g: 1.7, defaultServingG: 80 },
+
+  // Mexican
+  { name: 'Refried Beans', caloriesPer100g: 100, proteinPer100g: 6, carbsPer100g: 16, fatPer100g: 1.5, defaultServingG: 100 },
+  { name: 'Corn Tortilla', caloriesPer100g: 218, proteinPer100g: 6, carbsPer100g: 46, fatPer100g: 2.5, defaultServingG: 30 },
+  { name: 'Nachos', caloriesPer100g: 346, proteinPer100g: 8, carbsPer100g: 37, fatPer100g: 19, defaultServingG: 100 },
+  { name: 'Quesadilla (cheese)', caloriesPer100g: 290, proteinPer100g: 13, carbsPer100g: 25, fatPer100g: 15, defaultServingG: 120 },
+  { name: 'Enchilada (chicken)', caloriesPer100g: 168, proteinPer100g: 10, carbsPer100g: 16, fatPer100g: 7, defaultServingG: 200 },
+
+  // Breakfast & Bakery
+  { name: 'Croissant', caloriesPer100g: 406, proteinPer100g: 9, carbsPer100g: 46, fatPer100g: 21, defaultServingG: 57 },
+  { name: 'Muffin (blueberry)', caloriesPer100g: 377, proteinPer100g: 5, carbsPer100g: 55, fatPer100g: 16, defaultServingG: 90 },
+  { name: 'Donut (glazed)', caloriesPer100g: 452, proteinPer100g: 5, carbsPer100g: 51, fatPer100g: 25, defaultServingG: 50 },
+  { name: 'English Muffin', caloriesPer100g: 227, proteinPer100g: 8, carbsPer100g: 44, fatPer100g: 2, defaultServingG: 57 },
+  { name: 'French Toast', caloriesPer100g: 229, proteinPer100g: 7.5, carbsPer100g: 31, fatPer100g: 9, defaultServingG: 90 },
+  { name: 'Eggs Benedict', caloriesPer100g: 198, proteinPer100g: 9, carbsPer100g: 16, fatPer100g: 11, defaultServingG: 200 },
+  { name: 'Scrambled Eggs', caloriesPer100g: 149, proteinPer100g: 10, carbsPer100g: 1.6, fatPer100g: 11, defaultServingG: 100 },
+
+  // Coffee & Drinks
+  { name: 'Black Coffee', caloriesPer100g: 1, proteinPer100g: 0.1, carbsPer100g: 0, fatPer100g: 0, defaultServingG: 240 },
+  { name: 'Latte (whole milk)', caloriesPer100g: 54, proteinPer100g: 3.2, carbsPer100g: 5.4, fatPer100g: 2, defaultServingG: 360 },
+  { name: 'Cappuccino', caloriesPer100g: 37, proteinPer100g: 2.5, carbsPer100g: 3.5, fatPer100g: 1.2, defaultServingG: 180 },
+  { name: 'Frappuccino', caloriesPer100g: 82, proteinPer100g: 1.5, carbsPer100g: 16, fatPer100g: 1.5, defaultServingG: 400 },
+  { name: 'Green Tea', caloriesPer100g: 1, proteinPer100g: 0.2, carbsPer100g: 0.2, fatPer100g: 0, defaultServingG: 240 },
+  { name: 'Protein Shake (milk-based)', caloriesPer100g: 75, proteinPer100g: 8, carbsPer100g: 6, fatPer100g: 2, defaultServingG: 350 },
+  { name: 'Smoothie (fruit)', caloriesPer100g: 60, proteinPer100g: 1, carbsPer100g: 14, fatPer100g: 0.3, defaultServingG: 350 },
+  { name: 'Sports Drink (Gatorade)', caloriesPer100g: 26, proteinPer100g: 0, carbsPer100g: 7, fatPer100g: 0, defaultServingG: 500 },
+  { name: 'Coconut Water', caloriesPer100g: 19, proteinPer100g: 0.7, carbsPer100g: 4.5, fatPer100g: 0.2, defaultServingG: 330 },
+
+  // More Snacks
+  { name: 'Rice Cakes', caloriesPer100g: 387, proteinPer100g: 8, carbsPer100g: 81, fatPer100g: 3, defaultServingG: 18 },
+  { name: 'Pretzels', caloriesPer100g: 380, proteinPer100g: 9, carbsPer100g: 80, fatPer100g: 2, defaultServingG: 30 },
+  { name: 'Crackers (whole grain)', caloriesPer100g: 421, proteinPer100g: 10, carbsPer100g: 68, fatPer100g: 13, defaultServingG: 28 },
+  { name: 'Trail Mix', caloriesPer100g: 462, proteinPer100g: 12, carbsPer100g: 45, fatPer100g: 28, defaultServingG: 40 },
+  { name: 'Dark Chocolate (85%)', caloriesPer100g: 604, proteinPer100g: 10, carbsPer100g: 29, fatPer100g: 51, defaultServingG: 30 },
+  { name: 'Gummy Bears', caloriesPer100g: 330, proteinPer100g: 6, carbsPer100g: 77, fatPer100g: 0.5, defaultServingG: 40 },
+
+  // Condiments & Sauces
+  { name: 'Barbecue Sauce', caloriesPer100g: 172, proteinPer100g: 1, carbsPer100g: 40, fatPer100g: 0.8, defaultServingG: 30 },
+  { name: 'Hot Sauce', caloriesPer100g: 11, proteinPer100g: 0.6, carbsPer100g: 1.8, fatPer100g: 0.4, defaultServingG: 10 },
+  { name: 'Sriracha', caloriesPer100g: 93, proteinPer100g: 1.5, carbsPer100g: 18, fatPer100g: 2.5, defaultServingG: 10 },
+  { name: 'Tahini', caloriesPer100g: 595, proteinPer100g: 17, carbsPer100g: 21, fatPer100g: 54, defaultServingG: 15 },
+  { name: 'Teriyaki Sauce', caloriesPer100g: 89, proteinPer100g: 5, carbsPer100g: 17, fatPer100g: 0.1, defaultServingG: 30 },
+  { name: 'Cream of Mushroom Soup', caloriesPer100g: 53, proteinPer100g: 1.5, carbsPer100g: 7, fatPer100g: 2, defaultServingG: 240 },
 ];
 
 async function main() {
