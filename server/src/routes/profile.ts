@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import prisma from '../prisma';
 import { NutritionService } from '../services/nutrition.service';
-import { OnboardingData, OnboardingResult, UserProfile } from '@calorielens/shared';
+import { OnboardingData, OnboardingResult, UserProfile } from '../shared-types';
 
 const router = express.Router();
 

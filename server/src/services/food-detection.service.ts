@@ -1,5 +1,5 @@
 import prisma from '../prisma';
-import { FoodDetectionResult } from '@calorielens/shared';
+import { FoodDetectionResult } from '../shared-types';
 
 export class FoodDetectionService {
   /**

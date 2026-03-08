@@ -1,5 +1,5 @@
 import prisma from '../prisma';
-import { CreateDebtRequest, Debt, DebtStatus } from '@calorielens/shared';
+import { CreateDebtRequest, Debt, DebtStatus } from '../shared-types';
 
 export class DebtService {
   /**

@@ -1,5 +1,5 @@
 import { NutritionService } from '../nutrition.service';
-import { OnboardingData } from '@calorielens/shared';
+import { OnboardingData } from '../shared-types';
 
 describe('NutritionService', () => {
   describe('calculateBMR', () => {

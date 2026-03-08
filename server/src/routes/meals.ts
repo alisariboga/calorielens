@@ -7,7 +7,7 @@ import { authenticate, AuthRequest } from '../middleware/auth';
 import prisma from '../prisma';
 import { FoodDetectionService } from '../services/food-detection.service';
 import { NutritionService } from '../services/nutrition.service';
-import { Meal, MealItem } from '@calorielens/shared';
+import { Meal, MealItem } from '../shared-types';
 
 const router = express.Router();
 

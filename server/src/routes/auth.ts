@@ -3,7 +3,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import prisma from '../prisma';
-import { AuthResponse } from '@calorielens/shared';
+import { AuthResponse } from '../shared-types';
 
 const router = express.Router();
 

@@ -2,7 +2,7 @@ import express from 'express';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import prisma from '../prisma';
 import { DebtService } from '../services/debt.service';
-import { DailySummary, WeeklySummary } from '@calorielens/shared';
+import { DailySummary, WeeklySummary } from '../shared-types';
 
 const router = express.Router();
 

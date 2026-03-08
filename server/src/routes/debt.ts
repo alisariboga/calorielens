@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import prisma from '../prisma';
 import { DebtService } from '../services/debt.service';
-import { DebtStatus } from '@calorielens/shared';
+import { DebtStatus } from '../shared-types';
 
 const router = express.Router();
 

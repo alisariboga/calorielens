@@ -1,4 +1,4 @@
-import { OnboardingData, OnboardingResult } from '@calorielens/shared';
+import { OnboardingData, OnboardingResult } from '../shared-types';
 
 export class NutritionService {
   /**
