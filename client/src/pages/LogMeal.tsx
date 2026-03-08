@@ -1,14 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { mealApi, foodApi } from '../api/client';
-import { FoodItem, MealItemInput } from '@calorielens/shared';
+import { FoodItem, MealItemInput } from '../shared-types';
 import Layout from '../components/Layout';
 
 export default function LogMeal() {
   const navigate = useNavigate();
   const [method, setMethod] = useState<'photo' | 'text'>('text');
   const [mealType, setMealType] = useState<'breakfast' | 'lunch' | 'dinner' | 'snack'>('lunch');
-  const [textInput, setTextInput] = useState('');
   const [photo, setPhoto] = useState<File | null>(null);
   const [items, setItems] = useState<MealItemInput[]>([]);
   const [searchQuery, setSearchQuery] = useState('');

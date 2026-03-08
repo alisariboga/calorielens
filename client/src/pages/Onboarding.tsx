@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { profileApi } from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import { OnboardingData } from '@calorielens/shared';
+import { OnboardingData } from '../shared-types';
 
 export default function Onboarding() {
   const navigate = useNavigate();

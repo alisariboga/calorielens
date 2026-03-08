@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { profileApi } from '../api/client';
-import { OnboardingData } from '@calorielens/shared';
+import { OnboardingData } from '../shared-types';
 import Layout from '../components/Layout';
 
 export default function Settings() {

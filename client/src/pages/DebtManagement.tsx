@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { debtApi, summaryApi } from '../api/client';
-import { DebtStatus, DailySummary } from '@calorielens/shared';
+import { DebtStatus, DailySummary } from '../shared-types';
 import Layout from '../components/Layout';
 
 export default function DebtManagement() {

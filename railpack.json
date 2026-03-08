@@ -1,0 +1,5 @@
+{
+  "deploy": {
+    "startCommand": "npx serve -s client/dist"
+  }
+}

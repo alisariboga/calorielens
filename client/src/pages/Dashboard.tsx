@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { summaryApi, debtApi, mealApi } from '../api/client';
-import { DailySummary, WeeklySummary, DebtStatus } from '@calorielens/shared';
+import { DailySummary, WeeklySummary, DebtStatus } from '../shared-types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import Layout from '../components/Layout';
 
