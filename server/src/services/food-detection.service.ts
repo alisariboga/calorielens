@@ -116,22 +116,17 @@ export class FoodDetectionService {
    * Search food database
    */
   static async searchFoods(query: string, limit: number = 20) {
-    return await prisma.$queryRawUnsafe<Array<{
-      id: string;
-      name: string;
-      caloriesPer100g: number;
-      proteinPer100g: number;
-      carbsPer100g: number;
-      fatPer100g: number;
-      defaultServingG: number;
-    }>>(
-      `SELECT id, name, caloriesPer100g, proteinPer100g, carbsPer100g, fatPer100g, defaultServingG
-       FROM FoodItem
-       WHERE LOWER(name) LIKE LOWER(?)
-       ORDER BY name ASC
-       LIMIT ?`,
-      `%${query}%`,
-      limit
-    );
+    return await prisma.foodItem.findMany({
+      where: {
+        name: {
+          contains: query,
+          mode: 'insensitive'
+        }
+      },
+      take: limit,
+      orderBy: {
+        name: 'asc'
+      }
+    });
   }
 }
