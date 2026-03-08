@@ -1,3 +1,5 @@
+import fs from 'fs';
+import Anthropic from '@anthropic-ai/sdk';
 import prisma from '../prisma';
 import { FoodDetectionResult } from '../shared-types';
 
@@ -99,17 +101,78 @@ export class FoodDetectionService {
   }
 
   /**
-   * Analyze uploaded image (placeholder for future ML integration)
-   * Currently returns empty result, requiring manual entry
+   * Analyze uploaded image using Claude vision API
    */
   static async analyzeImage(imagePath: string): Promise<FoodDetectionResult> {
-    // Future: integrate with local ML model for image recognition
-    // For MVP, we return empty and rely on user confirmation
-    
-    return {
-      detectedFoods: [],
-      needsConfirmation: true
-    };
+    if (!process.env.ANTHROPIC_API_KEY) {
+      return { detectedFoods: [], needsConfirmation: true };
+    }
+
+    try {
+      const imageBuffer = fs.readFileSync(imagePath);
+      const base64Image = imageBuffer.toString('base64');
+
+      // Determine media type from file extension
+      const ext = imagePath.split('.').pop()?.toLowerCase();
+      type ImageMediaType = 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp';
+      const mediaTypeMap: Record<string, ImageMediaType> = {
+        jpg: 'image/jpeg',
+        jpeg: 'image/jpeg',
+        png: 'image/png',
+        gif: 'image/gif',
+        webp: 'image/webp'
+      };
+      const mediaType: ImageMediaType = (ext && mediaTypeMap[ext]) || 'image/jpeg';
+
+      const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+      const response = await client.messages.create({
+        model: 'claude-opus-4-6',
+        max_tokens: 1024,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'image',
+                source: { type: 'base64', media_type: mediaType, data: base64Image }
+              },
+              {
+                type: 'text',
+                text: `Analyze this food image and identify all food items visible. For each item, estimate the quantity in grams.
+
+Respond ONLY with a JSON array in this exact format (no markdown, no explanation):
+[
+  {"name": "food name", "quantityG": 150, "confidence": 0.9},
+  {"name": "another food", "quantityG": 80, "confidence": 0.7}
+]
+
+If no food is visible, respond with an empty array: []
+Use common food names that would appear in a nutrition database (e.g., "chicken breast", "white rice", "broccoli").`
+              }
+            ]
+          }
+        ]
+      });
+
+      const textBlock = response.content.find(b => b.type === 'text');
+      if (!textBlock || textBlock.type !== 'text') {
+        return { detectedFoods: [], needsConfirmation: true };
+      }
+
+      const parsed: Array<{ name: string; quantityG: number; confidence: number }> =
+        JSON.parse(textBlock.text.trim());
+
+      const detectedFoods = parsed.map(item => ({
+        name: item.name,
+        confidence: item.confidence,
+        suggestedQuantityG: item.quantityG
+      }));
+
+      return { detectedFoods, needsConfirmation: detectedFoods.length > 0 };
+    } catch {
+      return { detectedFoods: [], needsConfirmation: true };
+    }
   }
 
   /**
