@@ -1,6 +1,17 @@
 import prisma from '../prisma';
-import type { Debt as PrismaDebt } from '@prisma/client';
 import { CreateDebtRequest, Debt, DebtStatus } from '../shared-types';
+
+type DebtRecord = {
+  id: string;
+  userId: string;
+  createdDate: Date;
+  totalCalories: number;
+  remainingCalories: number;
+  startDate: Date;
+  endDate: Date;
+  dailyPaybackCalories: number;
+  status: string;
+};
 
 export class DebtService {
   /**
@@ -101,10 +112,10 @@ export class DebtService {
       });
     }
 
-    const currentDebts = activeDebts.filter((d: PrismaDebt) => !debtsToComplete.includes(d.id));
+    const currentDebts = activeDebts.filter((d: DebtRecord) => !debtsToComplete.includes(d.id));
 
     // Attach computed remaining to each debt object for display
-    const debtsWithActualRemaining = currentDebts.map((debt: PrismaDebt) => {
+    const debtsWithActualRemaining = currentDebts.map((debt: DebtRecord) => {
       const startDate = new Date(debt.startDate);
       startDate.setHours(0, 0, 0, 0);
       const daysElapsed = Math.max(
@@ -183,7 +194,7 @@ export class DebtService {
     });
     
     const totalPayback = activeDebts.reduce(
-      (sum: number, debt: PrismaDebt) => sum + debt.dailyPaybackCalories,
+      (sum: number, debt: DebtRecord) => sum + debt.dailyPaybackCalories,
       0
     );
     
