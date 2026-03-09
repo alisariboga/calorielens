@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { mealApi, foodApi } from '../api/client';
 import { FoodItem, MealItemInput } from '../shared-types';
@@ -11,10 +11,18 @@ export default function LogMeal() {
   const [photo, setPhoto] = useState<File | null>(null);
   const [items, setItems] = useState<MealItemInput[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<FoodItem[]>([]);
+  const [allFoods, setAllFoods] = useState<FoodItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    foodApi.search('', 300).then(setAllFoods).catch(() => {});
+  }, []);
+
+  const filteredFoods = searchQuery.trim()
+    ? allFoods.filter(f => f.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    : allFoods;
 
   const handlePhotoChange = async (file: File | null) => {
     setPhoto(file);
@@ -39,15 +47,6 @@ export default function LogMeal() {
     }
   };
 
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) return;
-    try {
-      const results = await foodApi.search(searchQuery);
-      setSearchResults(results);
-    } catch (err) {
-      console.error('Search failed:', err);
-    }
-  };
 
   const addItem = (food: FoodItem) => {
     setItems([...items, {
@@ -56,7 +55,6 @@ export default function LogMeal() {
       quantityG: food.defaultServingG
     }]);
     setSearchQuery('');
-    setSearchResults([]);
   };
 
   const removeItem = (index: number) => {
@@ -181,40 +179,33 @@ export default function LogMeal() {
 
           {/* Food Search */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Add Foods</label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                placeholder="Search for foods..."
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md"
-              />
-              <button
-                onClick={handleSearch}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-              >
-                Search
-              </button>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Add Foods ({allFoods.length} available)
+            </label>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Filter foods..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-md mb-2"
+            />
+            <div className="border border-gray-200 rounded-md max-h-60 overflow-y-auto">
+              {filteredFoods.map((food) => (
+                <button
+                  key={food.id}
+                  onClick={() => addItem(food)}
+                  className="w-full text-left px-4 py-2 hover:bg-indigo-50 border-b border-gray-100 last:border-0"
+                >
+                  <div className="font-medium text-sm">{food.name}</div>
+                  <div className="text-xs text-gray-500">
+                    {food.caloriesPer100g} cal / 100g · serving {food.defaultServingG}g
+                  </div>
+                </button>
+              ))}
+              {filteredFoods.length === 0 && (
+                <div className="px-4 py-3 text-sm text-gray-500">No foods found</div>
+              )}
             </div>
-
-            {searchResults.length > 0 && (
-              <div className="mt-2 border border-gray-200 rounded-md max-h-60 overflow-y-auto">
-                {searchResults.map((food) => (
-                  <button
-                    key={food.id}
-                    onClick={() => addItem(food)}
-                    className="w-full text-left px-4 py-2 hover:bg-gray-50 border-b border-gray-100 last:border-0"
-                  >
-                    <div className="font-medium">{food.name}</div>
-                    <div className="text-sm text-gray-600">
-                      {food.caloriesPer100g} cal per 100g
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* Added Items */}

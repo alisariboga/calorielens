@@ -13,13 +13,9 @@ router.get('/search', authenticate, async (req: AuthRequest, res) => {
     
     const { q, limit } = req.query;
     
-    if (!q) {
-      return res.status(400).json({ error: 'Query parameter required' });
-    }
-    
     const foods = await FoodDetectionService.searchFoods(
-      q as string,
-      limit ? parseInt(limit as string) : 20
+      (q as string) || '',
+      limit ? parseInt(limit as string) : 300
     );
     
     res.json(foods);
