@@ -112,6 +112,26 @@ router.post('/', authenticate, upload.single('photo'), async (req: AuthRequest, 
             itemInput.carbsPer100g ?? 0,
             itemInput.fatPer100g ?? 0
           );
+        } else {
+          // Fallback: fuzzy match food name in database
+          const nameParts = itemInput.name.toLowerCase().split(/\s+/);
+          const dbFood = await prisma.foodItem.findFirst({
+            where: {
+              OR: nameParts.map(word => ({
+                name: { contains: word, mode: 'insensitive' as const }
+              }))
+            },
+            orderBy: { name: 'asc' }
+          });
+          if (dbFood) {
+            macros = NutritionService.calculateMacros(
+              itemInput.quantityG,
+              dbFood.caloriesPer100g,
+              dbFood.proteinPer100g,
+              dbFood.carbsPer100g,
+              dbFood.fatPer100g
+            );
+          }
         }
         
         await prisma.mealItem.create({
