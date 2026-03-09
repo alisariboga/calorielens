@@ -62,6 +62,14 @@ export const mealApi = {
   
   parseText: (textInput: string) =>
     api.post<FoodDetectionResult>('/meals/parse-text', { textInput }).then(res => res.data),
+
+  analyzePhoto: (photo: File) => {
+    const formData = new FormData();
+    formData.append('photo', photo);
+    return api.post<FoodDetectionResult>('/meals/analyze-photo', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    }).then(res => res.data);
+  },
   
   addItem: (mealId: string, item: MealItemInput) =>
     api.post(`/meals/${mealId}/items`, item).then(res => res.data),

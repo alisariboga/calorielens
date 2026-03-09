@@ -13,7 +13,31 @@ export default function LogMeal() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<FoodItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState('');
+
+  const handlePhotoChange = async (file: File | null) => {
+    setPhoto(file);
+    if (!file) return;
+    setAnalyzing(true);
+    setError('');
+    try {
+      const result = await mealApi.analyzePhoto(file);
+      if (result.detectedFoods.length > 0) {
+        const newItems: MealItemInput[] = result.detectedFoods.map(f => ({
+          name: f.name,
+          quantityG: f.suggestedQuantityG
+        }));
+        setItems(prev => [...prev, ...newItems]);
+      } else {
+        setError('No food detected in photo. Please add items manually.');
+      }
+    } catch {
+      setError('Photo analysis failed. Please add items manually.');
+    } finally {
+      setAnalyzing(false);
+    }
+  };
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
@@ -139,12 +163,17 @@ export default function LogMeal() {
               <input
                 type="file"
                 accept="image/*"
-                onChange={(e) => setPhoto(e.target.files?.[0] || null)}
+                onChange={(e) => handlePhotoChange(e.target.files?.[0] || null)}
                 className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
               />
               {photo && (
                 <div className="mt-2 text-sm text-gray-600">
                   Selected: {photo.name}
+                </div>
+              )}
+              {analyzing && (
+                <div className="mt-2 text-sm text-indigo-600">
+                  Analyzing photo with AI...
                 </div>
               )}
             </div>

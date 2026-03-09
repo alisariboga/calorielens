@@ -148,6 +148,29 @@ router.post('/', authenticate, upload.single('photo'), async (req: AuthRequest, 
   }
 });
 
+// Analyze photo and return detected foods (without saving meal)
+router.post('/analyze-photo', authenticate, upload.single('photo'), async (req: AuthRequest, res) => {
+  try {
+    if (!req.userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ error: 'No photo uploaded' });
+    }
+
+    const result = await FoodDetectionService.analyzeImage(req.file.path);
+
+    // Clean up temp file after analysis
+    fs.unlink(req.file.path, () => {});
+
+    res.json(result);
+  } catch (error) {
+    console.error('Analyze photo error:', error);
+    res.status(500).json({ error: 'Failed to analyze photo' });
+  }
+});
+
 // Parse text input for foods
 router.post('/parse-text', authenticate, async (req: AuthRequest, res) => {
   try {
