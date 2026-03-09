@@ -139,16 +139,16 @@ export class FoodDetectionService {
               },
               {
                 type: 'text',
-                text: `Analyze this food image and identify all food items visible. For each item, estimate the quantity in grams.
+                text: `Analyze this food image and identify all food items visible. For each item, estimate the quantity in grams and provide nutritional values per 100g.
 
 Respond ONLY with a JSON array in this exact format (no markdown, no explanation):
 [
-  {"name": "food name", "quantityG": 150, "confidence": 0.9},
-  {"name": "another food", "quantityG": 80, "confidence": 0.7}
+  {"name": "food name", "quantityG": 150, "confidence": 0.9, "caloriesPer100g": 165, "proteinPer100g": 31, "carbsPer100g": 0, "fatPer100g": 3.6},
+  {"name": "another food", "quantityG": 80, "confidence": 0.7, "caloriesPer100g": 130, "proteinPer100g": 3, "carbsPer100g": 28, "fatPer100g": 0.3}
 ]
 
 If no food is visible, respond with an empty array: []
-Use common food names that would appear in a nutrition database (e.g., "chicken breast", "white rice", "broccoli").`
+Use common food names. Provide accurate nutritional estimates per 100g based on typical values.`
               }
             ]
           }
@@ -160,13 +160,24 @@ Use common food names that would appear in a nutrition database (e.g., "chicken 
         return { detectedFoods: [], needsConfirmation: true };
       }
 
-      const parsed: Array<{ name: string; quantityG: number; confidence: number }> =
-        JSON.parse(textBlock.text.trim());
+      const parsed: Array<{
+        name: string;
+        quantityG: number;
+        confidence: number;
+        caloriesPer100g?: number;
+        proteinPer100g?: number;
+        carbsPer100g?: number;
+        fatPer100g?: number;
+      }> = JSON.parse(textBlock.text.trim());
 
       const detectedFoods = parsed.map(item => ({
         name: item.name,
         confidence: item.confidence,
-        suggestedQuantityG: item.quantityG
+        suggestedQuantityG: item.quantityG,
+        caloriesPer100g: item.caloriesPer100g,
+        proteinPer100g: item.proteinPer100g,
+        carbsPer100g: item.carbsPer100g,
+        fatPer100g: item.fatPer100g
       }));
 
       return { detectedFoods, needsConfirmation: detectedFoods.length > 0 };

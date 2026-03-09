@@ -34,7 +34,11 @@ export default function LogMeal() {
       if (result.detectedFoods.length > 0) {
         const newItems: MealItemInput[] = result.detectedFoods.map(f => ({
           name: f.name,
-          quantityG: f.suggestedQuantityG
+          quantityG: f.suggestedQuantityG,
+          caloriesPer100g: f.caloriesPer100g,
+          proteinPer100g: f.proteinPer100g,
+          carbsPer100g: f.carbsPer100g,
+          fatPer100g: f.fatPer100g
         }));
         setItems(prev => [...prev, ...newItems]);
       } else {

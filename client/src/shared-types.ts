@@ -96,17 +96,17 @@ export interface CreateMealRequest {
   notes?: string;
   method: 'photo' | 'text';
   textInput?: string;
-  items?: Array<{
-    foodItemId?: string;
-    name: string;
-    quantityG: number;
-  }>;
+  items?: MealItemInput[];
 }
 
 export interface MealItemInput {
   foodItemId?: string;
   name: string;
   quantityG: number;
+  caloriesPer100g?: number;
+  proteinPer100g?: number;
+  carbsPer100g?: number;
+  fatPer100g?: number;
 }
 
 // Summaries
@@ -161,6 +161,10 @@ export interface FoodDetectionResult {
     name: string;
     confidence: number;
     suggestedQuantityG: number;
+    caloriesPer100g?: number;
+    proteinPer100g?: number;
+    carbsPer100g?: number;
+    fatPer100g?: number;
   }>;
   needsConfirmation: boolean;
 }

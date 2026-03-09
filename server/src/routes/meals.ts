@@ -54,7 +54,11 @@ const createMealSchema = z.object({
     z.array(z.object({
       foodItemId: z.string().optional(),
       name: z.string(),
-      quantityG: z.number()
+      quantityG: z.number(),
+      caloriesPer100g: z.number().optional(),
+      proteinPer100g: z.number().optional(),
+      carbsPer100g: z.number().optional(),
+      fatPer100g: z.number().optional()
     })).optional()
   )
 });
@@ -85,12 +89,11 @@ router.post('/', authenticate, upload.single('photo'), async (req: AuthRequest, 
       // Create meal items
       for (const itemInput of data.items) {
         let macros = { calories: 0, protein: 0, carbs: 0, fat: 0 };
-        
+
         if (itemInput.foodItemId) {
           const foodItem = await prisma.foodItem.findUnique({
             where: { id: itemInput.foodItemId }
           });
-          
           if (foodItem) {
             macros = NutritionService.calculateMacros(
               itemInput.quantityG,
@@ -100,6 +103,14 @@ router.post('/', authenticate, upload.single('photo'), async (req: AuthRequest, 
               foodItem.fatPer100g
             );
           }
+        } else if (itemInput.caloriesPer100g != null) {
+          macros = NutritionService.calculateMacros(
+            itemInput.quantityG,
+            itemInput.caloriesPer100g,
+            itemInput.proteinPer100g ?? 0,
+            itemInput.carbsPer100g ?? 0,
+            itemInput.fatPer100g ?? 0
+          );
         }
         
         await prisma.mealItem.create({
