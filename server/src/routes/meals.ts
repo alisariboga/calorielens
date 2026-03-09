@@ -87,6 +87,7 @@ router.post('/', authenticate, upload.single('photo'), async (req: AuthRequest, 
       });
       
       // Create meal items
+      console.log('Creating meal items:', JSON.stringify(data.items));
       for (const itemInput of data.items) {
         let macros = { calories: 0, protein: 0, carbs: 0, fat: 0 };
 
