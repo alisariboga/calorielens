@@ -3,11 +3,43 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { z } from 'zod';
+import Anthropic from '@anthropic-ai/sdk';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import prisma from '../prisma';
 import { FoodDetectionService } from '../services/food-detection.service';
 import { NutritionService } from '../services/nutrition.service';
 import { Meal, MealItem } from '../shared-types';
+
+async function estimateMacrosForItems(
+  items: Array<{ name: string; quantityG: number }>
+): Promise<Map<string, { caloriesPer100g: number; proteinPer100g: number; carbsPer100g: number; fatPer100g: number }>> {
+  const result = new Map();
+  if (!process.env.ANTHROPIC_API_KEY || items.length === 0) return result;
+  try {
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const list = items.map(i => i.name).join('\n');
+    const response = await client.messages.create({
+      model: 'claude-opus-4-6',
+      max_tokens: 512,
+      messages: [{
+        role: 'user',
+        content: `For each food below, provide nutritional values per 100g. Respond ONLY with a JSON object mapping food name to values, no markdown:
+{"food name": {"caloriesPer100g": 165, "proteinPer100g": 31, "carbsPer100g": 0, "fatPer100g": 3.6}}
+
+Foods:
+${list}`
+      }]
+    });
+    const text = response.content.find(b => b.type === 'text');
+    if (text && text.type === 'text') {
+      const parsed = JSON.parse(text.text.trim());
+      for (const [name, macros] of Object.entries(parsed)) {
+        result.set(name, macros);
+      }
+    }
+  } catch { /* ignore errors, fallback to 0 cal */ }
+  return result;
+}
 
 const router = express.Router();
 
@@ -75,6 +107,10 @@ router.post('/', authenticate, upload.single('photo'), async (req: AuthRequest, 
     
     // If items are provided, create meal with them
     if (data.items && data.items.length > 0) {
+      // Pre-estimate macros for items without calorie data
+      const itemsNeedingMacros = data.items.filter(i => i.caloriesPer100g == null);
+      const estimatedMacros = await estimateMacrosForItems(itemsNeedingMacros);
+
       const meal = await prisma.meal.create({
         data: {
           userId: req.userId,
@@ -113,23 +149,15 @@ router.post('/', authenticate, upload.single('photo'), async (req: AuthRequest, 
             itemInput.fatPer100g ?? 0
           );
         } else {
-          // Fallback: fuzzy match food name in database
-          const nameParts = itemInput.name.toLowerCase().split(/\s+/);
-          const dbFood = await prisma.foodItem.findFirst({
-            where: {
-              OR: nameParts.map(word => ({
-                name: { contains: word, mode: 'insensitive' as const }
-              }))
-            },
-            orderBy: { name: 'asc' }
-          });
-          if (dbFood) {
+          // Fallback: use Claude-estimated macros
+          const estimated = estimatedMacros.get(itemInput.name);
+          if (estimated) {
             macros = NutritionService.calculateMacros(
               itemInput.quantityG,
-              dbFood.caloriesPer100g,
-              dbFood.proteinPer100g,
-              dbFood.carbsPer100g,
-              dbFood.fatPer100g
+              estimated.caloriesPer100g,
+              estimated.proteinPer100g,
+              estimated.carbsPer100g,
+              estimated.fatPer100g
             );
           }
         }
