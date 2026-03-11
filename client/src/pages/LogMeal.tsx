@@ -73,6 +73,12 @@ export default function LogMeal() {
     setItems(newItems);
   };
 
+  const updateName = (index: number, name: string) => {
+    const newItems = [...items];
+    newItems[index].name = name;
+    setItems(newItems);
+  };
+
   const handleSubmit = async () => {
     if (items.length === 0 && method === 'text') {
       setError('Please add at least one food item');
@@ -223,9 +229,12 @@ export default function LogMeal() {
               <div className="space-y-2">
                 {items.map((item, index) => (
                   <div key={index} className="flex items-center gap-2 p-3 bg-gray-50 rounded-md">
-                    <div className="flex-1">
-                      <div className="font-medium">{item.name}</div>
-                    </div>
+                    <input
+                      type="text"
+                      value={item.name}
+                      onChange={(e) => updateName(index, e.target.value)}
+                      className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm font-medium"
+                    />
                     <input
                       type="number"
                       value={item.quantityG}
