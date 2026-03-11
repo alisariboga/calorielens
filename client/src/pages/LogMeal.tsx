@@ -79,6 +79,13 @@ export default function LogMeal() {
     setItems(newItems);
   };
 
+  const getDateTime = () => {
+    if (!dateParam) return undefined;
+    const now = new Date();
+    const [year, month, day] = dateParam.split('-').map(Number);
+    return new Date(year, month - 1, day, now.getHours(), now.getMinutes(), now.getSeconds()).toISOString();
+  };
+
   const handleSubmit = async () => {
     if (items.length === 0 && method === 'text') {
       setError('Please add at least one food item');
@@ -94,14 +101,15 @@ export default function LogMeal() {
         formData.append('photo', photo);
         formData.append('mealType', mealType);
         formData.append('method', 'photo');
-        if (dateParam) formData.append('dateTime', dateParam);
+        const dt = getDateTime();
+        if (dt) formData.append('dateTime', dt);
         formData.append('items', JSON.stringify(items));
         await mealApi.create(formData);
       } else {
         await mealApi.create({
           mealType,
           method: 'text',
-          dateTime: dateParam,
+          dateTime: getDateTime(),
           items
         });
       }
