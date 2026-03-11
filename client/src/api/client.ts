@@ -84,6 +84,9 @@ export const mealApi = {
 export const summaryApi = {
   getToday: () =>
     api.get<DailySummary>('/summary/today').then(res => res.data),
+
+  getByDate: (date: string) =>
+    api.get<DailySummary>('/summary/today', { params: { date } }).then(res => res.data),
   
   getWeek: () =>
     api.get<WeeklySummary>('/summary/week').then(res => res.data),

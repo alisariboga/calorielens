@@ -8,29 +8,34 @@ import Layout from '../components/Layout';
 
 export default function Dashboard() {
   const { profile } = useAuth();
+  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [dailySummary, setDailySummary] = useState<DailySummary | null>(null);
   const [weeklySummary, setWeeklySummary] = useState<WeeklySummary | null>(null);
   const [debtStatus, setDebtStatus] = useState<DebtStatus | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const today = new Date().toISOString().split('T')[0];
+  const isToday = selectedDate === today;
+
   useEffect(() => {
-    loadData();
-  }, []);
+    loadData(selectedDate);
+  }, [selectedDate]);
 
   const handleDeleteMeal = async (mealId: string) => {
     if (!confirm('Delete this meal?')) return;
     try {
       await mealApi.delete(mealId);
-      await loadData();
+      await loadData(selectedDate);
     } catch (error) {
       console.error('Failed to delete meal:', error);
     }
   };
 
-  const loadData = async () => {
+  const loadData = async (date: string) => {
+    setLoading(true);
     try {
       const [daily, weekly, debt] = await Promise.all([
-        summaryApi.getToday(),
+        summaryApi.getByDate(date),
         summaryApi.getWeek(),
         debtApi.getStatus()
       ]);
@@ -42,6 +47,18 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const changeDate = (offset: number) => {
+    const d = new Date(selectedDate + 'T00:00:00');
+    d.setDate(d.getDate() + offset);
+    const newDate = d.toISOString().split('T')[0];
+    if (newDate <= today) setSelectedDate(newDate);
+  };
+
+  const formatDisplayDate = (date: string) => {
+    const d = new Date(date + 'T00:00:00');
+    return d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
   };
 
   if (loading || !dailySummary || !weeklySummary || !profile) {
@@ -60,9 +77,30 @@ export default function Dashboard() {
   return (
     <Layout>
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600 mt-1">Track your daily progress</p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+            <p className="text-gray-600 mt-1">Track your daily progress</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => changeDate(-1)}
+              className="p-2 rounded-md border border-gray-300 hover:bg-gray-50 text-gray-700"
+            >
+              ←
+            </button>
+            <div className="text-center min-w-[160px]">
+              <div className="font-semibold text-gray-900">{formatDisplayDate(selectedDate)}</div>
+              {isToday && <div className="text-xs text-indigo-600">Today</div>}
+            </div>
+            <button
+              onClick={() => changeDate(1)}
+              disabled={isToday}
+              className="p-2 rounded-md border border-gray-300 hover:bg-gray-50 text-gray-700 disabled:opacity-30"
+            >
+              →
+            </button>
+          </div>
         </div>
 
         {/* Today's Summary */}
@@ -135,9 +173,11 @@ export default function Dashboard() {
         {/* Today's Meals */}
         <div className="bg-white rounded-lg shadow mb-8">
           <div className="p-6 border-b border-gray-200 flex justify-between items-center">
-            <h2 className="text-xl font-bold text-gray-900">Today's Meals</h2>
+            <h2 className="text-xl font-bold text-gray-900">
+              {isToday ? "Today's Meals" : `Meals — ${formatDisplayDate(selectedDate)}`}
+            </h2>
             <Link
-              to="/log-meal"
+              to={`/log-meal?date=${selectedDate}`}
               className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
             >
               + Log Meal

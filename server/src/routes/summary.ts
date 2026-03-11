@@ -21,9 +21,9 @@ router.get('/today', authenticate, async (req: AuthRequest, res) => {
       return res.status(404).json({ error: 'Profile not found' });
     }
     
-    const today = new Date();
+    const today = req.query.date ? new Date(req.query.date as string) : new Date();
     today.setHours(0, 0, 0, 0);
-    const endOfDay = new Date();
+    const endOfDay = new Date(today);
     endOfDay.setHours(23, 59, 59, 999);
     
     // Get today's meals

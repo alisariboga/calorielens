@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { mealApi, foodApi } from '../api/client';
 import { FoodItem, MealItemInput } from '../shared-types';
 import Layout from '../components/Layout';
 
 export default function LogMeal() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const dateParam = searchParams.get('date') || undefined;
   const [method, setMethod] = useState<'photo' | 'text'>('text');
   const [mealType, setMealType] = useState<'breakfast' | 'lunch' | 'dinner' | 'snack'>('lunch');
   const [photo, setPhoto] = useState<File | null>(null);
@@ -86,12 +88,14 @@ export default function LogMeal() {
         formData.append('photo', photo);
         formData.append('mealType', mealType);
         formData.append('method', 'photo');
+        if (dateParam) formData.append('dateTime', dateParam);
         formData.append('items', JSON.stringify(items));
         await mealApi.create(formData);
       } else {
         await mealApi.create({
           mealType,
           method: 'text',
+          dateTime: dateParam,
           items
         });
       }
