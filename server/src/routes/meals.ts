@@ -17,14 +17,14 @@ async function estimateMacrosForItems(
   if (!process.env.ANTHROPIC_API_KEY || items.length === 0) return result;
   try {
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-    const list = items.map(i => i.name).join('\n');
+    const list = items.map((i, idx) => `${idx}:${i.name}`).join('\n');
     const response = await client.messages.create({
       model: 'claude-opus-4-6',
       max_tokens: 512,
       messages: [{
         role: 'user',
-        content: `For each food below, provide nutritional values per 100g. Respond ONLY with a JSON object mapping food name to values, no markdown:
-{"food name": {"caloriesPer100g": 165, "proteinPer100g": 31, "carbsPer100g": 0, "fatPer100g": 3.6}}
+        content: `For each numbered food below, provide nutritional values per 100g. Respond ONLY with a JSON array indexed by number, no markdown:
+[{"caloriesPer100g": 165, "proteinPer100g": 31, "carbsPer100g": 0, "fatPer100g": 3.6}, ...]
 
 Foods:
 ${list}`
@@ -32,12 +32,15 @@ ${list}`
     });
     const text = response.content.find(b => b.type === 'text');
     if (text && text.type === 'text') {
-      const parsed = JSON.parse(text.text.trim());
-      for (const [name, macros] of Object.entries(parsed)) {
-        result.set(name, macros);
-      }
+      console.log('Claude macro estimation response:', text.text.trim());
+      const parsed: Array<{ caloriesPer100g: number; proteinPer100g: number; carbsPer100g: number; fatPer100g: number }> = JSON.parse(text.text.trim());
+      items.forEach((item, idx) => {
+        if (parsed[idx]) result.set(item.name, parsed[idx]);
+      });
     }
-  } catch { /* ignore errors, fallback to 0 cal */ }
+  } catch (err) {
+    console.error('Claude macro estimation failed:', err);
+  }
   return result;
 }
 
