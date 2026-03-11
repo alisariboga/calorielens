@@ -195,9 +195,39 @@ export default function Dashboard() {
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={weeklySummary.days}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" tickFormatter={(date) => new Date(date).toLocaleDateString('en-US', { weekday: 'short' })} />
+              <XAxis
+                dataKey="date"
+                tickFormatter={(date) => {
+                  const d = new Date(date + 'T00:00:00');
+                  const day = d.toLocaleDateString('en-US', { weekday: 'short' });
+                  const md = `${d.getMonth() + 1}/${d.getDate()}`;
+                  return `${day} ${md}`;
+                }}
+                tick={(props) => {
+                  const { x, y, payload } = props;
+                  const d = new Date(payload.value + 'T00:00:00');
+                  const today = new Date();
+                  const isToday = d.toDateString() === today.toDateString();
+                  const day = d.toLocaleDateString('en-US', { weekday: 'short' });
+                  const md = `${d.getMonth() + 1}/${d.getDate()}`;
+                  return (
+                    <g transform={`translate(${x},${y})`}>
+                      <text x={0} y={0} dy={12} textAnchor="middle" fill={isToday ? '#6366f1' : '#6b7280'} fontWeight={isToday ? 700 : 400} fontSize={12}>
+                        {day}
+                      </text>
+                      <text x={0} y={0} dy={26} textAnchor="middle" fill={isToday ? '#6366f1' : '#9ca3af'} fontWeight={isToday ? 700 : 400} fontSize={11}>
+                        {md}
+                      </text>
+                    </g>
+                  );
+                }}
+                height={45}
+              />
               <YAxis />
-              <Tooltip />
+              <Tooltip labelFormatter={(date) => {
+                const d = new Date(date + 'T00:00:00');
+                return d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+              }} />
               <Legend />
               <Bar dataKey="targetCalories" fill="#6366f1" name="Target" />
               <Bar dataKey="consumedCalories" fill="#10b981" name="Consumed" />

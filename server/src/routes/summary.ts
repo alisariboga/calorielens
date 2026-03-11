@@ -99,12 +99,18 @@ router.get('/week', authenticate, async (req: AuthRequest, res) => {
     }
     
     const days: WeeklySummary['days'] = [];
-    
-    // Get last 7 days
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      date.setHours(0, 0, 0, 0);
+
+    // Get Monday of current week
+    const today = new Date();
+    const dayOfWeek = today.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+    const monday = new Date(today);
+    monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+    monday.setHours(0, 0, 0, 0);
+
+    // Monday to Sunday
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(monday);
+      date.setDate(monday.getDate() + i);
       
       const endOfDay = new Date(date);
       endOfDay.setHours(23, 59, 59, 999);
