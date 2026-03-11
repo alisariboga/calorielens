@@ -32,7 +32,6 @@ ${list}`
     });
     const text = response.content.find(b => b.type === 'text');
     if (text && text.type === 'text') {
-      console.log('Claude macro estimation response:', text.text.trim());
       const parsed: Array<{ caloriesPer100g: number; proteinPer100g: number; carbsPer100g: number; fatPer100g: number }> = JSON.parse(text.text.trim());
       items.forEach((item, idx) => {
         if (parsed[idx]) result.set(item.name, parsed[idx]);
@@ -126,7 +125,6 @@ router.post('/', authenticate, upload.single('photo'), async (req: AuthRequest, 
       });
       
       // Create meal items
-      console.log('Creating meal items:', JSON.stringify(data.items));
       for (const itemInput of data.items) {
         let macros = { calories: 0, protein: 0, carbs: 0, fat: 0 };
 
@@ -153,7 +151,9 @@ router.post('/', authenticate, upload.single('photo'), async (req: AuthRequest, 
           );
         } else {
           // Fallback: use Claude-estimated macros
+          console.log('Map keys:', JSON.stringify([...estimatedMacros.keys()]), 'Looking for:', itemInput.name);
           const estimated = estimatedMacros.get(itemInput.name);
+          console.log('Estimated macros found:', JSON.stringify(estimated));
           if (estimated) {
             macros = NutritionService.calculateMacros(
               itemInput.quantityG,
