@@ -24,23 +24,23 @@ export class DebtService {
     baseTarget: number
   ): Promise<Debt> {
     const { overageCalories, paybackDays, startDate } = request;
-    
+
     const minCalories = userSex === 'female' ? 1200 : 1500;
     let dailyPayback = Math.round(overageCalories / paybackDays);
     let effectiveDays = paybackDays;
-    
+
     // Safety check: ensure we don't drop below minimum safe calories
     if (baseTarget - dailyPayback < minCalories) {
       dailyPayback = baseTarget - minCalories;
       effectiveDays = Math.ceil(overageCalories / dailyPayback);
     }
-    
+
     const start = startDate ? new Date(startDate) : new Date();
     start.setHours(0, 0, 0, 0);
-    
+
     const end = new Date(start);
     end.setDate(end.getDate() + effectiveDays);
-    
+
     const debt = await prisma.debt.create({
       data: {
         userId,
@@ -52,22 +52,107 @@ export class DebtService {
         status: 'active'
       }
     });
-    
+
     return debt as unknown as Debt;
   }
 
   /**
-   * Get current debt status for a user
+   * Recalculate debt remaining by looking at actual meal consumption for each past day.
+   * For each day since debt started (up to yesterday), computes:
+   *   actual_payback = max(0, baseTarget - consumed_that_day)
+   * Then updates remainingCalories and dailyPaybackCalories in the DB.
+   */
+  static async processActualPaybacks(userId: string, baseTarget: number): Promise<void> {
+    const activeDebts = await prisma.debt.findMany({
+      where: { userId, status: 'active' },
+      orderBy: { startDate: 'asc' }
+    });
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    for (const debt of activeDebts) {
+      const startDate = new Date(debt.startDate);
+      startDate.setHours(0, 0, 0, 0);
+
+      const endDate = new Date(debt.endDate);
+      endDate.setHours(0, 0, 0, 0);
+
+      // Recalculate from scratch using totalCalories (idempotent)
+      let remaining = debt.totalCalories;
+      const current = new Date(startDate);
+
+      while (current <= yesterday && remaining > 0) {
+        const dayStart = new Date(current);
+        const dayEnd = new Date(current);
+        dayEnd.setHours(23, 59, 59, 999);
+
+        const meals = await prisma.meal.findMany({
+          where: {
+            userId,
+            dateTime: { gte: dayStart, lte: dayEnd }
+          },
+          include: { items: true }
+        });
+
+        const consumed = meals.reduce(
+          (sum, meal) => sum + meal.items.reduce((s, item) => s + item.calories, 0),
+          0
+        );
+
+        // How much under base target the user ate — that's the actual debt payback
+        const actualPayback = Math.max(0, baseTarget - consumed);
+        remaining = Math.max(0, remaining - actualPayback);
+
+        current.setDate(current.getDate() + 1);
+      }
+
+      if (remaining <= 0) {
+        await prisma.debt.update({
+          where: { id: debt.id },
+          data: {
+            remainingCalories: 0,
+            dailyPaybackCalories: 0,
+            status: 'completed'
+          }
+        });
+        continue;
+      }
+
+      // Recalculate daily rate for remaining days
+      const daysRemaining = Math.max(
+        1,
+        Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+      );
+      const newDailyPayback = Math.round(remaining / daysRemaining);
+
+      await prisma.debt.update({
+        where: { id: debt.id },
+        data: {
+          remainingCalories: Math.round(remaining),
+          dailyPaybackCalories: newDailyPayback,
+          status: endDate <= today ? 'completed' : 'active'
+        }
+      });
+    }
+  }
+
+  /**
+   * Get current debt status for a user.
+   * First processes actual paybacks from meal history, then returns updated status.
    */
   static async getDebtStatus(userId: string): Promise<DebtStatus> {
+    const profile = await prisma.profile.findUnique({ where: { userId } });
+    if (profile) {
+      await DebtService.processActualPaybacks(userId, profile.baseTargetCalories);
+    }
+
     const activeDebts = await prisma.debt.findMany({
-      where: {
-        userId,
-        status: 'active'
-      },
-      orderBy: {
-        startDate: 'asc'
-      }
+      where: { userId, status: 'active' },
+      orderBy: { startDate: 'asc' }
     });
 
     const today = new Date();
@@ -75,7 +160,6 @@ export class DebtService {
 
     let todayPayback = 0;
     let totalRemaining = 0;
-    const debtsToComplete: string[] = [];
 
     for (const debt of activeDebts) {
       const startDate = new Date(debt.startDate);
@@ -83,98 +167,22 @@ export class DebtService {
       const endDate = new Date(debt.endDate);
       endDate.setHours(0, 0, 0, 0);
 
-      // Calculate actual remaining based on elapsed days
-      const daysElapsed = Math.max(
-        0,
-        Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
-      );
-      const paidAmount = Math.min(daysElapsed * debt.dailyPaybackCalories, debt.totalCalories);
-      const actualRemaining = Math.max(0, debt.totalCalories - paidAmount);
-
-      if (actualRemaining <= 0 || endDate <= today) {
-        debtsToComplete.push(debt.id);
-        continue;
-      }
-
-      totalRemaining += actualRemaining;
-
-      // Check if debt is active today
       if (startDate <= today && endDate > today) {
         todayPayback += debt.dailyPaybackCalories;
+        totalRemaining += debt.remainingCalories;
       }
     }
 
-    // Mark fully paid debts as completed
-    if (debtsToComplete.length > 0) {
-      await prisma.debt.updateMany({
-        where: { id: { in: debtsToComplete } },
-        data: { status: 'completed', remainingCalories: 0 }
-      });
-    }
-
-    const currentDebts = activeDebts.filter((d: DebtRecord) => !debtsToComplete.includes(d.id));
-
-    // Attach computed remaining to each debt object for display
-    const debtsWithActualRemaining = currentDebts.map((debt: DebtRecord) => {
-      const startDate = new Date(debt.startDate);
-      startDate.setHours(0, 0, 0, 0);
-      const daysElapsed = Math.max(
-        0,
-        Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
-      );
-      const paidAmount = Math.min(daysElapsed * debt.dailyPaybackCalories, debt.totalCalories);
-      return {
-        ...debt,
-        remainingCalories: Math.max(0, debt.totalCalories - paidAmount)
-      };
-    });
-
     return {
-      activeDebts: debtsWithActualRemaining as unknown as Debt[],
+      activeDebts: activeDebts as unknown as Debt[],
       totalRemaining: Math.round(totalRemaining),
       todayPayback: Math.round(todayPayback)
     };
   }
 
   /**
-   * Process daily debt payback
-   * Called when calculating daily targets
-   */
-  static async processDailyPayback(userId: string, date: Date): Promise<number> {
-    const dateOnly = new Date(date);
-    dateOnly.setHours(0, 0, 0, 0);
-    
-    const activeDebts = await prisma.debt.findMany({
-      where: {
-        userId,
-        status: 'active',
-        startDate: { lte: dateOnly },
-        endDate: { gt: dateOnly }
-      }
-    });
-    
-    let totalPayback = 0;
-    
-    for (const debt of activeDebts) {
-      totalPayback += debt.dailyPaybackCalories;
-      
-      // Update remaining calories
-      const newRemaining = Math.max(0, debt.remainingCalories - debt.dailyPaybackCalories);
-      
-      await prisma.debt.update({
-        where: { id: debt.id },
-        data: {
-          remainingCalories: newRemaining,
-          status: newRemaining <= 0 ? 'completed' : 'active'
-        }
-      });
-    }
-    
-    return Math.round(totalPayback);
-  }
-
-  /**
-   * Get effective target for a specific date
+   * Get effective calorie target for a specific date.
+   * Reads updated dailyPaybackCalories from DB (after processActualPaybacks has run).
    */
   static async getEffectiveTarget(
     userId: string,
@@ -183,7 +191,7 @@ export class DebtService {
   ): Promise<number> {
     const dateOnly = new Date(date);
     dateOnly.setHours(0, 0, 0, 0);
-    
+
     const activeDebts = await prisma.debt.findMany({
       where: {
         userId,
@@ -192,12 +200,12 @@ export class DebtService {
         endDate: { gt: dateOnly }
       }
     });
-    
+
     const totalPayback = activeDebts.reduce(
       (sum: number, debt: DebtRecord) => sum + debt.dailyPaybackCalories,
       0
     );
-    
+
     return Math.round(baseTarget - totalPayback);
   }
 }
