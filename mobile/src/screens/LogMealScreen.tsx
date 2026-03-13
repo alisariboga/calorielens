@@ -4,6 +4,7 @@ import {
   ScrollView, Alert, ActivityIndicator, Image
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { mealApi, foodApi } from '../api/client';
 import type { FoodItem, MealItemInput } from '../types/shared-types';
 
@@ -38,25 +39,38 @@ export default function LogMealScreen({ navigation, route }: any) {
 
   const filteredFoods = searchQuery.trim()
     ? allFoods.filter(f => f.name.toLowerCase().includes(searchQuery.toLowerCase()))
-    : allFoods;
+    : [];
+
+  const toJpegBase64 = async (uri: string) => {
+    const result = await ImageManipulator.manipulateAsync(
+      uri,
+      [{ resize: { width: 800 } }],
+      { compress: 0.6, format: ImageManipulator.SaveFormat.JPEG, base64: true }
+    );
+    return result.base64!;
+  };
 
   const pickPhoto = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') { Alert.alert('Permission needed', 'Please allow photo access'); return; }
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.4, base64: true });
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 1 });
     if (!result.canceled && result.assets[0]) {
-      setPhotoUri(result.assets[0].uri);
-      analyzePhoto(result.assets[0].base64!, 'image/jpeg');
+      const uri = result.assets[0].uri;
+      setPhotoUri(uri);
+      const base64 = await toJpegBase64(uri);
+      analyzePhoto(base64, 'image/jpeg');
     }
   };
 
   const takePhoto = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') { Alert.alert('Permission needed', 'Please allow camera access'); return; }
-    const result = await ImagePicker.launchCameraAsync({ quality: 0.4, base64: true });
+    const result = await ImagePicker.launchCameraAsync({ quality: 1 });
     if (!result.canceled && result.assets[0]) {
-      setPhotoUri(result.assets[0].uri);
-      analyzePhoto(result.assets[0].base64!, 'image/jpeg');
+      const uri = result.assets[0].uri;
+      setPhotoUri(uri);
+      const base64 = await toJpegBase64(uri);
+      analyzePhoto(base64, 'image/jpeg');
     }
   };
 
@@ -112,18 +126,7 @@ export default function LogMealScreen({ navigation, route }: any) {
     if (items.length === 0) { Alert.alert('Error', 'Add at least one food item'); return; }
     setLoading(true);
     try {
-      if (method === 'photo' && photoUri) {
-        const formData = new FormData();
-        formData.append('photo', { uri: photoUri, name: 'photo.jpg', type: 'image/jpeg' } as any);
-        formData.append('mealType', mealType);
-        formData.append('method', 'photo');
-        const dt = getDateTime();
-        if (dt) formData.append('dateTime', dt);
-        formData.append('items', JSON.stringify(items));
-        await mealApi.create(formData);
-      } else {
-        await mealApi.create({ mealType, method: 'text', dateTime: getDateTime(), items });
-      }
+        await mealApi.create({ mealType, method: method === 'photo' ? 'photo' : 'text', dateTime: getDateTime(), items });
       navigation.goBack();
     } catch (err: any) {
       Alert.alert('Error', err.response?.data?.error || 'Failed to log meal');
@@ -204,29 +207,31 @@ export default function LogMealScreen({ navigation, route }: any) {
 
         {(filteredFoods.length > 0 || usdaSearching || usdaResults.length > 0) && (
           <View style={styles.foodList}>
-            {filteredFoods.slice(0, 8).map(food => (
-              <TouchableOpacity key={food.id} style={styles.foodItem} onPress={() => addItem(food)}>
-                <Text style={styles.foodName}>{food.name}</Text>
-                <Text style={styles.foodMeta}>{food.caloriesPer100g} cal/100g</Text>
-              </TouchableOpacity>
-            ))}
-            {usdaSearching && (
-              <View style={styles.searchingRow}>
-                <ActivityIndicator size="small" color="#4f46e5" />
-                <Text style={styles.searchingText}> Searching USDA...</Text>
-              </View>
-            )}
-            {usdaResults.length > 0 && (
-              <>
-                <Text style={styles.usdaHeader}>USDA FoodData Central</Text>
-                {usdaResults.slice(0, 10).map(food => (
-                  <TouchableOpacity key={food.id} style={[styles.foodItem, styles.usdaItem]} onPress={() => addUsdaItem(food)}>
-                    <Text style={styles.foodName}>{food.name}</Text>
-                    <Text style={styles.foodMeta}>{food.caloriesPer100g} cal/100g · <Text style={{ color: '#16a34a' }}>USDA</Text></Text>
-                  </TouchableOpacity>
-                ))}
-              </>
-            )}
+            <ScrollView nestedScrollEnabled keyboardShouldPersistTaps="handled" style={{ maxHeight: 260 }}>
+              {filteredFoods.slice(0, 5).map(food => (
+                <TouchableOpacity key={food.id} style={styles.foodItem} onPress={() => addItem(food)}>
+                  <Text style={styles.foodName}>{food.name}</Text>
+                  <Text style={styles.foodMeta}>{food.caloriesPer100g} cal/100g</Text>
+                </TouchableOpacity>
+              ))}
+              {usdaSearching && (
+                <View style={styles.searchingRow}>
+                  <ActivityIndicator size="small" color="#4f46e5" />
+                  <Text style={styles.searchingText}> Searching USDA...</Text>
+                </View>
+              )}
+              {usdaResults.length > 0 && (
+                <>
+                  <Text style={styles.usdaHeader}>USDA FoodData Central</Text>
+                  {usdaResults.slice(0, 8).map(food => (
+                    <TouchableOpacity key={food.id} style={[styles.foodItem, styles.usdaItem]} onPress={() => addUsdaItem(food)}>
+                      <Text style={styles.foodName}>{food.name}</Text>
+                      <Text style={styles.foodMeta}>{food.caloriesPer100g} cal/100g · <Text style={{ color: '#16a34a' }}>USDA</Text></Text>
+                    </TouchableOpacity>
+                  ))}
+                </>
+              )}
+            </ScrollView>
           </View>
         )}
 
