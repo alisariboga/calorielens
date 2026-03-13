@@ -12,10 +12,12 @@ import type { FoodItem, MealItemInput } from '../types/shared-types';
 export default function LogMealScreen({ navigation, route }: any) {
   const dateParam: string | undefined = route.params?.date;
   const autoScan: boolean = route.params?.autoScan ?? false;
+  const initialItems: MealItemInput[] = route.params?.initialItems ?? [];
+  const initialPhotoUri: string | undefined = route.params?.initialPhotoUri;
   const [mealType, setMealType] = useState<'breakfast' | 'lunch' | 'dinner' | 'snack'>('lunch');
-  const [usedPhoto, setUsedPhoto] = useState(false);
-  const [photoUri, setPhotoUri] = useState<string | null>(null);
-  const [items, setItems] = useState<MealItemInput[]>([]);
+  const [usedPhoto, setUsedPhoto] = useState(!!initialPhotoUri);
+  const [photoUri, setPhotoUri] = useState<string | null>(initialPhotoUri ?? null);
+  const [items, setItems] = useState<MealItemInput[]>(initialItems);
   const [allFoods, setAllFoods] = useState<FoodItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [usdaResults, setUsdaResults] = useState<(FoodItem & { source: string })[]>([]);

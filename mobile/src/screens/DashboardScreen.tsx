@@ -1,10 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Alert, RefreshControl, Modal, Platform
+  Alert, RefreshControl, Modal, Platform, ActivityIndicator
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { useFocusEffect } from '@react-navigation/native';
-import { summaryApi, debtApi, mealApi } from '../api/client';
+import { summaryApi, debtApi, mealApi, foodApi } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import type { DailySummary, WeeklySummary, DebtStatus } from '../types/shared-types';
 
@@ -24,6 +26,7 @@ export default function DashboardScreen({ navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [showSheet, setShowSheet] = useState(false);
+  const [scanning, setScanning] = useState(false);
 
   const loadData = useCallback(async (date: string) => {
     try {
@@ -65,12 +68,32 @@ export default function DashboardScreen({ navigation }: any) {
     ]);
   };
 
-  const handleSheetAction = (action: 'scan' | 'log') => {
+  const handleScanFood = async () => {
     setShowSheet(false);
-    if (action === 'scan') {
-      navigation.navigate('LogMeal', { date: selectedDate, autoScan: true });
-    } else {
-      navigation.navigate('LogMeal', { date: selectedDate });
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') { Alert.alert('Permission needed', 'Please allow camera access'); return; }
+    const result = await ImagePicker.launchCameraAsync({ quality: 1 });
+    if (result.canceled || !result.assets[0]) return;
+
+    const uri = result.assets[0].uri;
+    setScanning(true);
+    try {
+      const manipulated = await ImageManipulator.manipulateAsync(
+        uri, [{ resize: { width: 800 } }],
+        { compress: 0.6, format: ImageManipulator.SaveFormat.JPEG, base64: true }
+      );
+      const detected = await mealApi.analyzePhoto(manipulated.base64!, 'image/jpeg');
+      const initialItems = detected.detectedFoods.map(f => ({
+        name: f.name, quantityG: f.suggestedQuantityG,
+        caloriesPer100g: f.caloriesPer100g, proteinPer100g: f.proteinPer100g,
+        carbsPer100g: f.carbsPer100g, fatPer100g: f.fatPer100g,
+      }));
+      if (initialItems.length === 0) Alert.alert('No food detected', 'Try again or add manually');
+      navigation.navigate('LogMeal', { date: selectedDate, initialItems, initialPhotoUri: uri });
+    } catch (err: any) {
+      Alert.alert('Analysis failed', err?.response?.data?.error || err?.message || 'Please try again');
+    } finally {
+      setScanning(false);
     }
   };
 
@@ -223,6 +246,14 @@ export default function DashboardScreen({ navigation }: any) {
       <Text style={styles.fabIcon}>{showSheet ? '✕' : '+'}</Text>
     </TouchableOpacity>
 
+    {/* Scanning overlay */}
+    {scanning && (
+      <View style={styles.scanOverlay}>
+        <ActivityIndicator size="large" color="#fff" />
+        <Text style={styles.scanOverlayText}>Analyzing food...</Text>
+      </View>
+    )}
+
     {/* Bottom Sheet */}
     <Modal
       visible={showSheet}
@@ -237,15 +268,29 @@ export default function DashboardScreen({ navigation }: any) {
       >
         <View style={styles.sheet} onStartShouldSetResponder={() => true}>
           <View style={styles.sheetHandle} />
-          <Text style={styles.sheetTitle}>Add Food</Text>
+          <Text style={styles.sheetTitle}>Quick Add</Text>
           <View style={styles.cardGrid}>
-            <TouchableOpacity style={styles.actionCard} onPress={() => handleSheetAction('scan')} activeOpacity={0.8}>
+            <TouchableOpacity style={styles.actionCard} onPress={handleScanFood} activeOpacity={0.8}>
               <Text style={styles.actionCardIcon}>📷</Text>
               <Text style={styles.actionCardLabel}>Scan Food</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.actionCard} onPress={() => handleSheetAction('log')} activeOpacity={0.8}>
-              <Text style={styles.actionCardIcon}>✍️</Text>
-              <Text style={styles.actionCardLabel}>Log Meal</Text>
+            <TouchableOpacity style={styles.actionCard}
+              onPress={() => { setShowSheet(false); navigation.navigate('LogMeal', { date: selectedDate }); }}
+              activeOpacity={0.8}>
+              <Text style={styles.actionCardIcon}>🔍</Text>
+              <Text style={styles.actionCardLabel}>Food Database</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionCard}
+              onPress={() => { setShowSheet(false); Alert.alert('Coming Soon', 'Log Exercise will be available soon!'); }}
+              activeOpacity={0.8}>
+              <Text style={styles.actionCardIcon}>🏋️</Text>
+              <Text style={styles.actionCardLabel}>Log Exercise</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionCard}
+              onPress={() => { setShowSheet(false); Alert.alert('Coming Soon', 'Saved Foods will be available soon!'); }}
+              activeOpacity={0.8}>
+              <Text style={styles.actionCardIcon}>🔖</Text>
+              <Text style={styles.actionCardLabel}>Saved Foods</Text>
             </TouchableOpacity>
           </View>
           <View style={{ height: Platform.OS === 'ios' ? 24 : 8 }} />
@@ -352,9 +397,9 @@ const styles = StyleSheet.create({
     color: '#111827',
     marginBottom: 20,
   },
-  cardGrid: { flexDirection: 'row', gap: 12 },
+  cardGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   actionCard: {
-    flex: 1,
+    width: '47%',
     backgroundColor: '#f9fafb',
     borderRadius: 16,
     borderWidth: 1,
@@ -365,4 +410,15 @@ const styles = StyleSheet.create({
   },
   actionCardIcon: { fontSize: 32 },
   actionCardLabel: { fontSize: 14, fontWeight: '600', color: '#111827' },
+
+  /* Scanning overlay */
+  scanOverlay: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.65)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 16,
+  },
+  scanOverlayText: { color: '#fff', fontSize: 16, fontWeight: '600' },
 });
