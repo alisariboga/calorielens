@@ -13,7 +13,7 @@ const onboardingSchema = z.object({
   heightCm: z.number().min(100).max(250),
   weightKg: z.number().min(30).max(300),
   activityLevel: z.enum(['sedentary', 'light', 'moderate', 'active', 'very_active']),
-  goalRateKgPerWeek: z.number().min(0.25).max(1)
+  goalRateKgPerWeek: z.number().min(-1).max(1)
 });
 
 // Create/update profile (onboarding)
