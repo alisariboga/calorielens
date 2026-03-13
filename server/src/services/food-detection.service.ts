@@ -190,7 +190,9 @@ Use common food names. Provide accurate nutritional estimates per 100g based on 
    * Analyze image from base64 string (for mobile clients)
    */
   static async analyzeImageBase64(base64: string, mimeType: string): Promise<FoodDetectionResult> {
+    console.log('analyzeImageBase64 called, base64 length:', base64?.length, 'mimeType:', mimeType);
     if (!process.env.ANTHROPIC_API_KEY) {
+      console.log('ERROR: ANTHROPIC_API_KEY is not set');
       return { detectedFoods: [], needsConfirmation: true };
     }
     try {
