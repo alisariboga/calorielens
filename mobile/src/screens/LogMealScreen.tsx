@@ -74,6 +74,15 @@ export default function LogMealScreen({ navigation, route }: any) {
     }
   };
 
+  const handlePhotoMethodTap = () => {
+    setMethod('photo');
+    Alert.alert('Add Photo', 'Choose a source', [
+      { text: '📷  Camera', onPress: takePhoto },
+      { text: '🖼️  Gallery', onPress: pickPhoto },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  };
+
   const analyzePhoto = async (base64: string, mimeType: string) => {
     setAnalyzing(true);
     try {
@@ -152,25 +161,29 @@ export default function LogMealScreen({ navigation, route }: any) {
         {/* Method */}
         <Text style={styles.label}>Method</Text>
         <View style={styles.row}>
-          {(['text', 'photo'] as const).map(m => (
-            <TouchableOpacity key={m} style={[styles.methodBtn, method === m && styles.chipActive]} onPress={() => setMethod(m)}>
-              <Text style={[styles.chipText, method === m && styles.chipTextActive]}>{m === 'text' ? '✍️ Manual' : '📷 Photo'}</Text>
-            </TouchableOpacity>
-          ))}
+          <TouchableOpacity
+            style={[styles.methodBtn, method === 'text' && styles.chipActive]}
+            onPress={() => setMethod('text')}
+          >
+            <Text style={[styles.chipText, method === 'text' && styles.chipTextActive]}>✍️ Manual</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.methodBtn, method === 'photo' && styles.chipActive]}
+            onPress={handlePhotoMethodTap}
+          >
+            <Text style={[styles.chipText, method === 'photo' && styles.chipTextActive]}>📷 Photo</Text>
+          </TouchableOpacity>
         </View>
 
-        {/* Photo */}
+        {/* Photo preview & status */}
         {method === 'photo' && (
           <View style={styles.photoSection}>
-            <View style={styles.row}>
-              <TouchableOpacity style={styles.photoBtn} onPress={pickPhoto}>
-                <Text style={styles.photoBtnText}>📁 Gallery</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.photoBtn} onPress={takePhoto}>
-                <Text style={styles.photoBtnText}>📷 Camera</Text>
-              </TouchableOpacity>
-            </View>
-            {photoUri && <Image source={{ uri: photoUri }} style={styles.photoPreview} />}
+            {photoUri
+              ? <TouchableOpacity onPress={handlePhotoMethodTap} activeOpacity={0.85}>
+                  <Image source={{ uri: photoUri }} style={styles.photoPreview} />
+                  <Text style={styles.retakeHint}>Tap to retake</Text>
+                </TouchableOpacity>
+              : null}
             {analyzing && (
               <View style={styles.analyzingRow}>
                 <ActivityIndicator size="small" color="#4f46e5" />
@@ -256,9 +269,8 @@ const styles = StyleSheet.create({
   chipTextActive: { color: '#fff' },
   methodBtn: { flex: 1, borderWidth: 1, borderColor: '#d1d5db', borderRadius: 8, padding: 12, alignItems: 'center', backgroundColor: '#fff' },
   photoSection: { marginTop: 8 },
-  photoBtn: { flex: 1, backgroundColor: '#e0e7ff', borderRadius: 8, padding: 12, alignItems: 'center' },
-  photoBtnText: { color: '#4f46e5', fontWeight: '600' },
   photoPreview: { width: '100%', height: 200, borderRadius: 8, marginTop: 8 },
+  retakeHint: { textAlign: 'center', fontSize: 12, color: '#6b7280', marginTop: 4 },
   analyzingRow: { flexDirection: 'row', alignItems: 'center', marginTop: 8 },
   analyzingText: { color: '#4f46e5', fontSize: 13 },
   itemRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8, backgroundColor: '#fff', padding: 8, borderRadius: 8 },
