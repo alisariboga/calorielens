@@ -265,35 +265,24 @@ export default function LogMealScreen({ navigation, route }: any) {
         animationType="slide"
         onRequestClose={() => setShowSheet(false)}
       >
-        <TouchableOpacity
-          style={styles.overlay}
-          activeOpacity={1}
-          onPress={() => setShowSheet(false)}
-        >
-          <View style={styles.sheet} onStartShouldSetResponder={() => true}>
-            {/* Handle bar */}
+        <View style={styles.modalRoot}>
+          <TouchableOpacity style={styles.overlayDismiss} activeOpacity={1} onPress={() => setShowSheet(false)} />
+          <View style={styles.sheet}>
             <View style={styles.sheetHandle} />
-
             <Text style={styles.sheetTitle}>Add Food</Text>
-
             <View style={styles.cardGrid}>
-              {/* Scan Food */}
-              <TouchableOpacity style={styles.card} onPress={handleScanFood} activeOpacity={0.8}>
+              <TouchableOpacity style={styles.card} onPress={handleScanFood} activeOpacity={0.7}>
                 <Text style={styles.cardIcon}>📷</Text>
                 <Text style={styles.cardLabel}>Scan Food</Text>
               </TouchableOpacity>
-
-              {/* Photo Library */}
-              <TouchableOpacity style={styles.card} onPress={handlePhotoLibrary} activeOpacity={0.8}>
+              <TouchableOpacity style={styles.card} onPress={handlePhotoLibrary} activeOpacity={0.7}>
                 <Text style={styles.cardIcon}>🖼️</Text>
                 <Text style={styles.cardLabel}>Photo Library</Text>
               </TouchableOpacity>
             </View>
-
-            {/* Safe area spacer */}
             <View style={{ height: Platform.OS === 'ios' ? 24 : 8 }} />
           </View>
-        </TouchableOpacity>
+        </View>
       </Modal>
     </View>
   );
@@ -352,11 +341,12 @@ const styles = StyleSheet.create({
   fabIcon: { color: '#fff', fontSize: 28, lineHeight: 32, fontWeight: '300' },
 
   /* Bottom sheet */
-  overlay: {
+  modalRoot: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.45)',
     justifyContent: 'flex-end',
   },
+  overlayDismiss: { flex: 1 },
   sheet: {
     backgroundColor: '#fff',
     borderTopLeftRadius: 24,

@@ -263,41 +263,41 @@ export default function DashboardScreen({ navigation }: any) {
       animationType="slide"
       onRequestClose={() => setShowSheet(false)}
     >
-      <TouchableOpacity
-        style={styles.overlay}
-        activeOpacity={1}
-        onPress={() => setShowSheet(false)}
-      >
-        <View style={styles.sheet} onStartShouldSetResponder={() => true}>
+      <View style={styles.modalRoot}>
+        {/* Dark area — tap to dismiss */}
+        <TouchableOpacity
+          style={styles.overlayDismiss}
+          activeOpacity={1}
+          onPress={() => setShowSheet(false)}
+        />
+        {/* Sheet — sibling to overlay, not child */}
+        <View style={styles.sheet}>
           <View style={styles.sheetHandle} />
           <Text style={styles.sheetTitle}>Quick Add</Text>
           <View style={styles.cardGrid}>
-            <TouchableOpacity style={styles.actionCard} onPress={handleScanFood} activeOpacity={0.8}>
+            <TouchableOpacity style={styles.actionCard} onPress={handleScanFood} activeOpacity={0.7}>
               <Text style={styles.actionCardIcon}>📷</Text>
               <Text style={styles.actionCardLabel}>Scan Food</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.actionCard}
-              onPress={() => { setShowSheet(false); navigation.navigate('LogMeal', { date: selectedDate }); }}
-              activeOpacity={0.8}>
+            <TouchableOpacity style={styles.actionCard} activeOpacity={0.7}
+              onPress={() => { setShowSheet(false); navigation.navigate('LogMeal', { date: selectedDate }); }}>
               <Text style={styles.actionCardIcon}>🔍</Text>
               <Text style={styles.actionCardLabel}>Food Database</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.actionCard}
-              onPress={() => { setShowSheet(false); Alert.alert('Coming Soon', 'Log Exercise will be available soon!'); }}
-              activeOpacity={0.8}>
+            <TouchableOpacity style={styles.actionCard} activeOpacity={0.7}
+              onPress={() => { setShowSheet(false); Alert.alert('Coming Soon', 'Log Exercise will be available soon!'); }}>
               <Text style={styles.actionCardIcon}>🏋️</Text>
               <Text style={styles.actionCardLabel}>Log Exercise</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.actionCard}
-              onPress={() => { setShowSheet(false); Alert.alert('Coming Soon', 'Saved Foods will be available soon!'); }}
-              activeOpacity={0.8}>
+            <TouchableOpacity style={styles.actionCard} activeOpacity={0.7}
+              onPress={() => { setShowSheet(false); Alert.alert('Coming Soon', 'Saved Foods will be available soon!'); }}>
               <Text style={styles.actionCardIcon}>🔖</Text>
               <Text style={styles.actionCardLabel}>Saved Foods</Text>
             </TouchableOpacity>
           </View>
           <View style={{ height: Platform.OS === 'ios' ? 24 : 8 }} />
         </View>
-      </TouchableOpacity>
+      </View>
     </Modal>
 
     </View>
@@ -372,10 +372,13 @@ const styles = StyleSheet.create({
   fabIcon: { color: '#fff', fontSize: 28, lineHeight: 32, fontWeight: '300' },
 
   /* Bottom sheet */
-  overlay: {
+  modalRoot: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.45)',
     justifyContent: 'flex-end',
+  },
+  overlayDismiss: {
+    flex: 1,
   },
   sheet: {
     backgroundColor: '#fff',
