@@ -61,6 +61,7 @@ export default function LogMealScreen({ navigation, route }: any) {
 
   const handleScanFood = async () => {
     setShowSheet(false);
+    await new Promise(resolve => setTimeout(resolve, 400));
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') { Alert.alert('Permission needed', 'Please allow camera access'); return; }
     const result = await ImagePicker.launchCameraAsync({ quality: 1 });
@@ -75,6 +76,7 @@ export default function LogMealScreen({ navigation, route }: any) {
 
   const handlePhotoLibrary = async () => {
     setShowSheet(false);
+    await new Promise(resolve => setTimeout(resolve, 400));
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') { Alert.alert('Permission needed', 'Please allow photo access'); return; }
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 1 });

@@ -6,7 +6,7 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { useFocusEffect } from '@react-navigation/native';
-import { summaryApi, debtApi, mealApi, foodApi } from '../api/client';
+import { summaryApi, debtApi, mealApi } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import type { DailySummary, WeeklySummary, DebtStatus } from '../types/shared-types';
 
@@ -70,6 +70,8 @@ export default function DashboardScreen({ navigation }: any) {
 
   const handleScanFood = async () => {
     setShowSheet(false);
+    // Wait for modal slide-out animation before opening native camera
+    await new Promise(resolve => setTimeout(resolve, 400));
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') { Alert.alert('Permission needed', 'Please allow camera access'); return; }
     const result = await ImagePicker.launchCameraAsync({ quality: 1 });
