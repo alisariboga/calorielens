@@ -11,6 +11,7 @@ import type { FoodItem, MealItemInput } from '../types/shared-types';
 
 export default function LogMealScreen({ navigation, route }: any) {
   const dateParam: string | undefined = route.params?.date;
+  const autoScan: boolean = route.params?.autoScan ?? false;
   const [mealType, setMealType] = useState<'breakfast' | 'lunch' | 'dinner' | 'snack'>('lunch');
   const [usedPhoto, setUsedPhoto] = useState(false);
   const [photoUri, setPhotoUri] = useState<string | null>(null);
@@ -26,6 +27,10 @@ export default function LogMealScreen({ navigation, route }: any) {
 
   useEffect(() => {
     foodApi.search('', 300).then(setAllFoods).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (autoScan) handleScanFood();
   }, []);
 
   useEffect(() => {
