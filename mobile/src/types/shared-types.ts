@@ -96,11 +96,7 @@ export interface CreateMealRequest {
   notes?: string;
   method: 'photo' | 'text';
   textInput?: string;
-  items?: Array<{
-    foodItemId?: string;
-    name: string;
-    quantityG: number;
-  }>;
+  items?: MealItemInput[];
 }
 
 export interface MealItemInput {

@@ -2,11 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ScrollView, Alert, ActivityIndicator, Image, Modal,
-  SafeAreaView, Platform
+  Platform, Pressable
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
-import { mealApi, foodApi } from '../api/client';
+import { mealApi, foodApi, savedFoodsApi } from '../api/client';
 import type { FoodItem, MealItemInput } from '../types/shared-types';
 
 export default function LogMealScreen({ navigation, route }: any) {
@@ -25,6 +25,7 @@ export default function LogMealScreen({ navigation, route }: any) {
   const [loading, setLoading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [showSheet, setShowSheet] = useState(false);
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -59,34 +60,36 @@ export default function LogMealScreen({ navigation, route }: any) {
     return result.base64!;
   };
 
-  const handleScanFood = async () => {
+  const handleScanFood = () => {
     setShowSheet(false);
-    await new Promise(resolve => setTimeout(resolve, 400));
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== 'granted') { Alert.alert('Permission needed', 'Please allow camera access'); return; }
-    const result = await ImagePicker.launchCameraAsync({ quality: 1 });
-    if (!result.canceled && result.assets[0]) {
-      const uri = result.assets[0].uri;
-      setPhotoUri(uri);
-      setUsedPhoto(true);
-      const base64 = await toJpegBase64(uri);
-      analyzePhoto(base64, 'image/jpeg');
-    }
+    setTimeout(async () => {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') { Alert.alert('Permission needed', 'Please allow camera access'); return; }
+      const result = await ImagePicker.launchCameraAsync({ quality: 1 });
+      if (!result.canceled && result.assets[0]) {
+        const uri = result.assets[0].uri;
+        setPhotoUri(uri);
+        setUsedPhoto(true);
+        const base64 = await toJpegBase64(uri);
+        analyzePhoto(base64, 'image/jpeg');
+      }
+    }, 50);
   };
 
-  const handlePhotoLibrary = async () => {
+  const handlePhotoLibrary = () => {
     setShowSheet(false);
-    await new Promise(resolve => setTimeout(resolve, 400));
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') { Alert.alert('Permission needed', 'Please allow photo access'); return; }
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 1 });
-    if (!result.canceled && result.assets[0]) {
-      const uri = result.assets[0].uri;
-      setPhotoUri(uri);
-      setUsedPhoto(true);
-      const base64 = await toJpegBase64(uri);
-      analyzePhoto(base64, 'image/jpeg');
-    }
+    setTimeout(async () => {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') { Alert.alert('Permission needed', 'Please allow photo access'); return; }
+      const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: 'images', quality: 1 });
+      if (!result.canceled && result.assets[0]) {
+        const uri = result.assets[0].uri;
+        setPhotoUri(uri);
+        setUsedPhoto(true);
+        const base64 = await toJpegBase64(uri);
+        analyzePhoto(base64, 'image/jpeg');
+      }
+    }, 50);
   };
 
   const analyzePhoto = async (base64: string, mimeType: string) => {
@@ -112,6 +115,24 @@ export default function LogMealScreen({ navigation, route }: any) {
   const addItem = (food: FoodItem) => {
     setItems(prev => [...prev, { foodItemId: food.id, name: food.name, quantityG: food.defaultServingG }]);
     setSearchQuery(''); setUsdaResults([]);
+  };
+
+  const handleSaveFood = async (food: FoodItem | (FoodItem & { source: string })) => {
+    const key = food.id;
+    if (savedIds.has(key)) return;
+    try {
+      await savedFoodsApi.create({
+        name: food.name,
+        caloriesPer100g: food.caloriesPer100g,
+        proteinPer100g: food.proteinPer100g,
+        carbsPer100g: food.carbsPer100g,
+        fatPer100g: food.fatPer100g,
+        defaultServingG: food.defaultServingG,
+      });
+      setSavedIds(prev => new Set(prev).add(key));
+    } catch {
+      Alert.alert('Error', 'Could not save food');
+    }
   };
 
   const addUsdaItem = (food: FoodItem & { source: string }) => {
@@ -212,10 +233,17 @@ export default function LogMealScreen({ navigation, route }: any) {
             <View style={styles.foodList}>
               <ScrollView nestedScrollEnabled keyboardShouldPersistTaps="handled" style={{ maxHeight: 260 }}>
                 {filteredFoods.slice(0, 5).map(food => (
-                  <TouchableOpacity key={food.id} style={styles.foodItem} onPress={() => addItem(food)}>
-                    <Text style={styles.foodName}>{food.name}</Text>
-                    <Text style={styles.foodMeta}>{food.caloriesPer100g} cal/100g</Text>
-                  </TouchableOpacity>
+                  <View key={food.id} style={styles.foodItemRow}>
+                    <TouchableOpacity style={styles.foodItemInfo} onPress={() => addItem(food)}>
+                      <Text style={styles.foodName}>{food.name}</Text>
+                      <Text style={styles.foodMeta}>{food.caloriesPer100g} cal/100g</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.saveIconBtn} onPress={() => handleSaveFood(food)}>
+                      <Text style={[styles.saveIcon, savedIds.has(food.id) && styles.saveIconSaved]}>
+                        {savedIds.has(food.id) ? '🔖' : '🔖'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
                 ))}
                 {usdaSearching && (
                   <View style={styles.searchingRow}>
@@ -227,10 +255,17 @@ export default function LogMealScreen({ navigation, route }: any) {
                   <>
                     <Text style={styles.usdaHeader}>USDA FoodData Central</Text>
                     {usdaResults.slice(0, 8).map(food => (
-                      <TouchableOpacity key={food.id} style={[styles.foodItem, styles.usdaItem]} onPress={() => addUsdaItem(food)}>
-                        <Text style={styles.foodName}>{food.name}</Text>
-                        <Text style={styles.foodMeta}>{food.caloriesPer100g} cal/100g · <Text style={{ color: '#16a34a' }}>USDA</Text></Text>
-                      </TouchableOpacity>
+                      <View key={food.id} style={[styles.foodItemRow, styles.usdaItem]}>
+                        <TouchableOpacity style={styles.foodItemInfo} onPress={() => addUsdaItem(food)}>
+                          <Text style={styles.foodName}>{food.name}</Text>
+                          <Text style={styles.foodMeta}>{food.caloriesPer100g} cal/100g · <Text style={{ color: '#16a34a' }}>USDA</Text></Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.saveIconBtn} onPress={() => handleSaveFood(food)}>
+                          <Text style={[styles.saveIcon, savedIds.has(food.id) && styles.saveIconSaved]}>
+                            🔖
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
                     ))}
                   </>
                 )}
@@ -262,27 +297,26 @@ export default function LogMealScreen({ navigation, route }: any) {
       <Modal
         visible={showSheet}
         transparent
-        animationType="slide"
+        animationType="none"
         onRequestClose={() => setShowSheet(false)}
       >
-        <View style={styles.modalRoot}>
-          <TouchableOpacity style={styles.overlayDismiss} activeOpacity={1} onPress={() => setShowSheet(false)} />
-          <View style={styles.sheet}>
+        <Pressable style={styles.modalRoot} onPress={() => setShowSheet(false)}>
+          <Pressable style={styles.sheet} onPress={() => {}}>
             <View style={styles.sheetHandle} />
             <Text style={styles.sheetTitle}>Add Food</Text>
             <View style={styles.cardGrid}>
-              <TouchableOpacity style={styles.card} onPress={handleScanFood} activeOpacity={0.7}>
+              <Pressable style={({ pressed }) => [styles.card, pressed && styles.cardPressed]} onPress={handleScanFood}>
                 <Text style={styles.cardIcon}>📷</Text>
                 <Text style={styles.cardLabel}>Scan Food</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.card} onPress={handlePhotoLibrary} activeOpacity={0.7}>
+              </Pressable>
+              <Pressable style={({ pressed }) => [styles.card, pressed && styles.cardPressed]} onPress={handlePhotoLibrary}>
                 <Text style={styles.cardIcon}>🖼️</Text>
                 <Text style={styles.cardLabel}>Photo Library</Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
             <View style={{ height: Platform.OS === 'ios' ? 24 : 8 }} />
-          </View>
-        </View>
+          </Pressable>
+        </Pressable>
       </Modal>
     </View>
   );
@@ -309,10 +343,15 @@ const styles = StyleSheet.create({
   removeBtn: { color: '#ef4444', fontSize: 16, padding: 4 },
   searchInput: { borderWidth: 1, borderColor: '#d1d5db', borderRadius: 8, padding: 12, backgroundColor: '#fff', fontSize: 14 },
   foodList: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 8, marginTop: 4 },
+  foodItemRow: { flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#f3f4f6' },
+  foodItemInfo: { flex: 1, padding: 12 },
   foodItem: { padding: 12, borderBottomWidth: 1, borderBottomColor: '#f3f4f6' },
   usdaItem: { backgroundColor: '#f0fdf4' },
   foodName: { fontSize: 14, fontWeight: '500', color: '#111827' },
   foodMeta: { fontSize: 12, color: '#6b7280', marginTop: 2 },
+  saveIconBtn: { paddingHorizontal: 12, paddingVertical: 8 },
+  saveIcon: { fontSize: 18, opacity: 0.3 },
+  saveIconSaved: { opacity: 1 },
   searchingRow: { flexDirection: 'row', alignItems: 'center', padding: 12 },
   searchingText: { fontSize: 13, color: '#4f46e5' },
   usdaHeader: { fontSize: 11, fontWeight: '600', color: '#9ca3af', padding: 8, backgroundColor: '#f9fafb' },
@@ -346,7 +385,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.45)',
     justifyContent: 'flex-end',
   },
-  overlayDismiss: { flex: 1 },
   sheet: {
     backgroundColor: '#fff',
     borderTopLeftRadius: 24,
@@ -371,18 +409,18 @@ const styles = StyleSheet.create({
   },
   cardGrid: {
     flexDirection: 'row',
-    gap: 12,
+    justifyContent: 'space-between',
   },
   card: {
-    flex: 1,
+    width: '48%',
     backgroundColor: '#f9fafb',
     borderRadius: 16,
     borderWidth: 1,
     borderColor: '#e5e7eb',
     paddingVertical: 24,
     alignItems: 'center',
-    gap: 10,
   },
-  cardIcon: { fontSize: 32 },
+  cardPressed: { backgroundColor: '#e5e7eb' },
+  cardIcon: { fontSize: 32, marginBottom: 8 },
   cardLabel: { fontSize: 14, fontWeight: '600', color: '#111827' },
 });

@@ -14,6 +14,7 @@ import LogMealScreen from '../screens/LogMealScreen';
 import EditMealScreen from '../screens/EditMealScreen';
 import DebtManagementScreen from '../screens/DebtManagementScreen';
 import SettingsScreen from '../screens/SettingsScreen';
+import SavedFoodsScreen from '../screens/SavedFoodsScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -70,6 +71,7 @@ function AppNavigator() {
             <Stack.Screen name="Main" component={MainTabs} options={{ headerShown: false }} />
             <Stack.Screen name="LogMeal" component={LogMealScreen} options={{ title: 'Log Meal' }} />
             <Stack.Screen name="EditMeal" component={EditMealScreen} options={{ title: 'Edit Meal' }} />
+            <Stack.Screen name="SavedFoods" component={SavedFoodsScreen} options={{ title: 'Saved Foods' }} />
           </>
         )}
       </Stack.Navigator>

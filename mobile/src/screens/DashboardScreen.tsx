@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Alert, RefreshControl, Modal, Platform, ActivityIndicator
+  Alert, RefreshControl, Modal, Platform, ActivityIndicator, Pressable
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
@@ -68,16 +68,7 @@ export default function DashboardScreen({ navigation }: any) {
     ]);
   };
 
-  const handleScanFood = async () => {
-    setShowSheet(false);
-    // Wait for modal slide-out animation before opening native camera
-    await new Promise(resolve => setTimeout(resolve, 400));
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== 'granted') { Alert.alert('Permission needed', 'Please allow camera access'); return; }
-    const result = await ImagePicker.launchCameraAsync({ quality: 1 });
-    if (result.canceled || !result.assets[0]) return;
-
-    const uri = result.assets[0].uri;
+  const analyzeAndNavigate = async (uri: string) => {
     setScanning(true);
     try {
       const manipulated = await ImageManipulator.manipulateAsync(
@@ -97,6 +88,34 @@ export default function DashboardScreen({ navigation }: any) {
     } finally {
       setScanning(false);
     }
+  };
+
+  const openCamera = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') { Alert.alert('Permission needed', 'Please allow camera access'); return; }
+    const result = await ImagePicker.launchCameraAsync({ quality: 1 });
+    if (result.canceled || !result.assets[0]) return;
+    await analyzeAndNavigate(result.assets[0].uri);
+  };
+
+  const openGallery = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') { Alert.alert('Permission needed', 'Please allow photo library access'); return; }
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: 'images', quality: 1 });
+    if (result.canceled || !result.assets[0]) return;
+    await analyzeAndNavigate(result.assets[0].uri);
+  };
+
+  const handleScanFood = () => {
+    setShowSheet(false);
+    // animationType="none" so modal is already gone; small delay for React to flush
+    setTimeout(() => {
+      Alert.alert('Add Food Photo', 'Choose a source', [
+        { text: 'Camera', onPress: openCamera },
+        { text: 'Photo Library', onPress: openGallery },
+        { text: 'Cancel', style: 'cancel' },
+      ]);
+    }, 50);
   };
 
   if (loading || !dailySummary || !profile) {
@@ -260,44 +279,37 @@ export default function DashboardScreen({ navigation }: any) {
     <Modal
       visible={showSheet}
       transparent
-      animationType="slide"
+      animationType="none"
       onRequestClose={() => setShowSheet(false)}
     >
-      <View style={styles.modalRoot}>
-        {/* Dark area — tap to dismiss */}
-        <TouchableOpacity
-          style={styles.overlayDismiss}
-          activeOpacity={1}
-          onPress={() => setShowSheet(false)}
-        />
-        {/* Sheet — sibling to overlay, not child */}
-        <View style={styles.sheet}>
+      <Pressable style={styles.modalRoot} onPress={() => setShowSheet(false)}>
+        <Pressable style={styles.sheet} onPress={() => {}}>
           <View style={styles.sheetHandle} />
           <Text style={styles.sheetTitle}>Quick Add</Text>
           <View style={styles.cardGrid}>
-            <TouchableOpacity style={styles.actionCard} onPress={handleScanFood} activeOpacity={0.7}>
+            <Pressable style={({ pressed }) => [styles.actionCard, pressed && styles.actionCardPressed]} onPress={handleScanFood}>
               <Text style={styles.actionCardIcon}>📷</Text>
               <Text style={styles.actionCardLabel}>Scan Food</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.actionCard} activeOpacity={0.7}
+            </Pressable>
+            <Pressable style={({ pressed }) => [styles.actionCard, pressed && styles.actionCardPressed]}
               onPress={() => { setShowSheet(false); navigation.navigate('LogMeal', { date: selectedDate }); }}>
               <Text style={styles.actionCardIcon}>🔍</Text>
               <Text style={styles.actionCardLabel}>Food Database</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.actionCard} activeOpacity={0.7}
+            </Pressable>
+            <Pressable style={({ pressed }) => [styles.actionCard, pressed && styles.actionCardPressed]}
               onPress={() => { setShowSheet(false); Alert.alert('Coming Soon', 'Log Exercise will be available soon!'); }}>
               <Text style={styles.actionCardIcon}>🏋️</Text>
               <Text style={styles.actionCardLabel}>Log Exercise</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.actionCard} activeOpacity={0.7}
-              onPress={() => { setShowSheet(false); Alert.alert('Coming Soon', 'Saved Foods will be available soon!'); }}>
+            </Pressable>
+            <Pressable style={({ pressed }) => [styles.actionCard, pressed && styles.actionCardPressed]}
+              onPress={() => { setShowSheet(false); navigation.navigate('SavedFoods', { date: selectedDate }); }}>
               <Text style={styles.actionCardIcon}>🔖</Text>
               <Text style={styles.actionCardLabel}>Saved Foods</Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
           <View style={{ height: Platform.OS === 'ios' ? 24 : 8 }} />
-        </View>
-      </View>
+        </Pressable>
+      </Pressable>
     </Modal>
 
     </View>
@@ -377,9 +389,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.45)',
     justifyContent: 'flex-end',
   },
-  overlayDismiss: {
-    flex: 1,
-  },
   sheet: {
     backgroundColor: '#fff',
     borderTopLeftRadius: 24,
@@ -402,18 +411,19 @@ const styles = StyleSheet.create({
     color: '#111827',
     marginBottom: 20,
   },
-  cardGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  cardGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
   actionCard: {
-    width: '47%',
+    width: '48%',
     backgroundColor: '#f9fafb',
     borderRadius: 16,
     borderWidth: 1,
     borderColor: '#e5e7eb',
     paddingVertical: 24,
     alignItems: 'center',
-    gap: 10,
+    marginBottom: 12,
   },
-  actionCardIcon: { fontSize: 32 },
+  actionCardPressed: { backgroundColor: '#e5e7eb' },
+  actionCardIcon: { fontSize: 32, marginBottom: 8 },
   actionCardLabel: { fontSize: 14, fontWeight: '600', color: '#111827' },
 
   /* Scanning overlay */

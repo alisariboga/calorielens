@@ -8,6 +8,7 @@ import mealRoutes from './routes/meals';
 import summaryRoutes from './routes/summary';
 import debtRoutes from './routes/debt';
 import foodRoutes from './routes/food';
+import savedFoodsRoutes from './routes/saved-foods';
 
 dotenv.config();
 
@@ -30,6 +31,7 @@ app.use('/api/meals', mealRoutes);
 app.use('/api/summary', summaryRoutes);
 app.use('/api/debt', debtRoutes);
 app.use('/api/food', foodRoutes);
+app.use('/api/saved-foods', savedFoodsRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
