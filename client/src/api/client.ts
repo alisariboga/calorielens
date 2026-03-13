@@ -77,6 +77,12 @@ export const mealApi = {
   getByDate: (date?: string) =>
     api.get<Meal[]>('/meals', { params: { date } }).then(res => res.data),
   
+  getById: (mealId: string) =>
+    api.get<Meal>(`/meals/${mealId}`).then(res => res.data),
+
+  update: (mealId: string, data: { mealType: string; items: MealItemInput[] }) =>
+    api.put<Meal>(`/meals/${mealId}`, data).then(res => res.data),
+
   delete: (mealId: string) =>
     api.delete(`/meals/${mealId}`).then(res => res.data),
 };

@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard';
 import LogMeal from './pages/LogMeal';
 import Settings from './pages/Settings';
 import DebtManagement from './pages/DebtManagement';
+import EditMeal from './pages/EditMeal';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -57,6 +58,11 @@ function AppRoutes() {
       <Route path="/settings" element={
         <ProtectedRoute>
           <Settings />
+        </ProtectedRoute>
+      } />
+      <Route path="/edit-meal/:mealId" element={
+        <ProtectedRoute>
+          <EditMeal />
         </ProtectedRoute>
       } />
       <Route path="/debt" element={

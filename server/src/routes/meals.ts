@@ -355,6 +355,104 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
   }
 });
 
+// Get single meal
+router.get('/:mealId', authenticate, async (req: AuthRequest, res) => {
+  try {
+    if (!req.userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    const meal = await prisma.meal.findFirst({
+      where: { id: req.params.mealId, userId: req.userId },
+      include: { items: true }
+    });
+    if (!meal) {
+      return res.status(404).json({ error: 'Meal not found' });
+    }
+    res.json(meal);
+  } catch (error) {
+    console.error('Get meal error:', error);
+    res.status(500).json({ error: 'Failed to get meal' });
+  }
+});
+
+// Update meal (mealType + items)
+router.put('/:mealId', authenticate, async (req: AuthRequest, res) => {
+  try {
+    if (!req.userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const meal = await prisma.meal.findFirst({
+      where: { id: req.params.mealId, userId: req.userId }
+    });
+    if (!meal) {
+      return res.status(404).json({ error: 'Meal not found' });
+    }
+
+    const { mealType, items } = req.body;
+
+    await prisma.meal.update({
+      where: { id: req.params.mealId },
+      data: { mealType }
+    });
+
+    // Replace all items
+    await prisma.mealItem.deleteMany({ where: { mealId: req.params.mealId } });
+
+    const itemsNeedingMacros = (items as any[]).filter((i: any) => i.caloriesPer100g == null && !i.foodItemId);
+    const estimatedMacros = await estimateMacrosForItems(itemsNeedingMacros);
+
+    for (const itemInput of items as any[]) {
+      let macros = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+
+      if (itemInput.foodItemId) {
+        const foodItem = await prisma.foodItem.findUnique({ where: { id: itemInput.foodItemId } });
+        if (foodItem) {
+          macros = NutritionService.calculateMacros(
+            itemInput.quantityG, foodItem.caloriesPer100g, foodItem.proteinPer100g,
+            foodItem.carbsPer100g, foodItem.fatPer100g
+          );
+        }
+      } else if (itemInput.caloriesPer100g != null) {
+        macros = NutritionService.calculateMacros(
+          itemInput.quantityG, itemInput.caloriesPer100g,
+          itemInput.proteinPer100g ?? 0, itemInput.carbsPer100g ?? 0, itemInput.fatPer100g ?? 0
+        );
+      } else {
+        const estimated = estimatedMacros.get(itemInput.name);
+        if (estimated) {
+          macros = NutritionService.calculateMacros(
+            itemInput.quantityG, estimated.caloriesPer100g, estimated.proteinPer100g,
+            estimated.carbsPer100g, estimated.fatPer100g
+          );
+        }
+      }
+
+      await prisma.mealItem.create({
+        data: {
+          mealId: req.params.mealId,
+          foodItemId: itemInput.foodItemId || null,
+          name: itemInput.name,
+          quantityG: itemInput.quantityG,
+          calories: macros.calories,
+          protein: macros.protein,
+          carbs: macros.carbs,
+          fat: macros.fat
+        }
+      });
+    }
+
+    const updated = await prisma.meal.findUnique({
+      where: { id: req.params.mealId },
+      include: { items: true }
+    });
+    res.json(updated);
+  } catch (error) {
+    console.error('Update meal error:', error);
+    res.status(500).json({ error: 'Failed to update meal' });
+  }
+});
+
 // Delete meal
 router.delete('/:mealId', authenticate, async (req: AuthRequest, res) => {
   try {

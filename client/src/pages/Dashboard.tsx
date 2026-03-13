@@ -204,6 +204,12 @@ export default function Dashboard() {
                         </div>
                         <div className="text-right flex items-center gap-3">
                           <div className="font-bold text-gray-900">{Math.round(totalCalories)} cal</div>
+                          <Link
+                            to={`/edit-meal/${meal.id}`}
+                            className="text-xs text-indigo-500 hover:text-indigo-700"
+                          >
+                            Edit
+                          </Link>
                           <button
                             onClick={() => handleDeleteMeal(meal.id)}
                             className="text-xs text-red-500 hover:text-red-700"
