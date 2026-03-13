@@ -35,7 +35,11 @@ export class DebtService {
       effectiveDays = Math.ceil(overageCalories / dailyPayback);
     }
 
-    const start = startDate ? new Date(startDate) : new Date();
+    const start = startDate ? new Date(startDate) : (() => {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      return tomorrow;
+    })();
     start.setHours(0, 0, 0, 0);
 
     const end = new Date(start);

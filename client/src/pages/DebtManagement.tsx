@@ -143,6 +143,9 @@ export default function DebtManagement() {
               <p className="text-sm text-gray-600">
                 New daily target: {profile.baseTargetCalories - Math.round(overage / paybackDays)} calories
               </p>
+              <p className="text-sm text-indigo-600 mt-1">
+                Payback starts tomorrow — today is not affected.
+              </p>
             </div>
 
             {error && (
