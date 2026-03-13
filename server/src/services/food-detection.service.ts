@@ -236,7 +236,8 @@ Use common food names. Provide accurate nutritional estimates per 100g based on 
         carbsPer100g: item.carbsPer100g, fatPer100g: item.fatPer100g
       }));
       return { detectedFoods, needsConfirmation: detectedFoods.length > 0 };
-    } catch {
+    } catch (err: any) {
+      console.log('analyzeImageBase64 error:', err?.message, err?.status, err?.error);
       return { detectedFoods: [], needsConfirmation: true };
     }
   }
