@@ -130,8 +130,8 @@ export default function LogMealScreen({ navigation, route }: any) {
         defaultServingG: food.defaultServingG,
       });
       setSavedIds(prev => new Set(prev).add(key));
-    } catch {
-      Alert.alert('Error', 'Could not save food');
+    } catch (err: any) {
+      Alert.alert('Error', err?.response?.data?.error || err?.message || 'Could not save food');
     }
   };
 
