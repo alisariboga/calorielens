@@ -234,6 +234,20 @@ router.post('/analyze-photo', authenticate, upload.single('photo'), async (req: 
   }
 });
 
+// Analyze photo from base64 (mobile app)
+router.post('/analyze-photo-base64', authenticate, async (req: AuthRequest, res) => {
+  try {
+    if (!req.userId) return res.status(401).json({ error: 'Unauthorized' });
+    const { base64, mimeType } = req.body;
+    if (!base64) return res.status(400).json({ error: 'No image data' });
+    const result = await FoodDetectionService.analyzeImageBase64(base64, mimeType || 'image/jpeg');
+    res.json(result);
+  } catch (error) {
+    console.error('Analyze base64 photo error:', error);
+    res.status(500).json({ error: 'Failed to analyze photo' });
+  }
+});
+
 // Parse text input for foods
 router.post('/parse-text', authenticate, async (req: AuthRequest, res) => {
   try {

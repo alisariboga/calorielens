@@ -187,6 +187,52 @@ Use common food names. Provide accurate nutritional estimates per 100g based on 
   }
 
   /**
+   * Analyze image from base64 string (for mobile clients)
+   */
+  static async analyzeImageBase64(base64: string, mimeType: string): Promise<FoodDetectionResult> {
+    if (!process.env.ANTHROPIC_API_KEY) {
+      return { detectedFoods: [], needsConfirmation: true };
+    }
+    try {
+      type ImageMediaType = 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp';
+      const validTypes: ImageMediaType[] = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      const mediaType: ImageMediaType = validTypes.includes(mimeType as ImageMediaType)
+        ? (mimeType as ImageMediaType)
+        : 'image/jpeg';
+
+      const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+      const response = await client.messages.create({
+        model: 'claude-opus-4-6',
+        max_tokens: 1024,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
+            {
+              type: 'text',
+              text: `Analyze this food image and identify all food items visible. For each item, estimate the quantity in grams and provide nutritional values per 100g.\n\nRespond ONLY with a JSON array in this exact format (no markdown, no explanation):\n[\n  {"name": "food name", "quantityG": 150, "confidence": 0.9, "caloriesPer100g": 165, "proteinPer100g": 31, "carbsPer100g": 0, "fatPer100g": 3.6}\n]\n\nIf no food is visible, respond with an empty array: []\nUse common food names. Provide accurate nutritional estimates per 100g based on typical values.`
+            }
+          ]
+        }]
+      });
+
+      const textBlock = response.content.find(b => b.type === 'text');
+      if (!textBlock || textBlock.type !== 'text') return { detectedFoods: [], needsConfirmation: true };
+
+      const parsed = JSON.parse(textBlock.text.trim());
+      const detectedFoods = parsed.map((item: any) => ({
+        name: item.name, confidence: item.confidence,
+        suggestedQuantityG: item.quantityG,
+        caloriesPer100g: item.caloriesPer100g, proteinPer100g: item.proteinPer100g,
+        carbsPer100g: item.carbsPer100g, fatPer100g: item.fatPer100g
+      }));
+      return { detectedFoods, needsConfirmation: detectedFoods.length > 0 };
+    } catch {
+      return { detectedFoods: [], needsConfirmation: true };
+    }
+  }
+
+  /**
    * Search food database
    */
   static async searchFoods(query: string, limit: number = 20) {
