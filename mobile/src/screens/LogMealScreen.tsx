@@ -46,7 +46,7 @@ export default function LogMealScreen({ navigation, route }: any) {
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.4, base64: true });
     if (!result.canceled && result.assets[0]) {
       setPhotoUri(result.assets[0].uri);
-      analyzePhoto(result.assets[0].base64!, result.assets[0].mimeType || 'image/jpeg');
+      analyzePhoto(result.assets[0].base64!, 'image/jpeg');
     }
   };
 
@@ -56,7 +56,7 @@ export default function LogMealScreen({ navigation, route }: any) {
     const result = await ImagePicker.launchCameraAsync({ quality: 0.4, base64: true });
     if (!result.canceled && result.assets[0]) {
       setPhotoUri(result.assets[0].uri);
-      analyzePhoto(result.assets[0].base64!, result.assets[0].mimeType || 'image/jpeg');
+      analyzePhoto(result.assets[0].base64!, 'image/jpeg');
     }
   };
 

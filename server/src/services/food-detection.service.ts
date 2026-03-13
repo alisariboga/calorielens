@@ -219,7 +219,14 @@ Use common food names. Provide accurate nutritional estimates per 100g based on 
       const textBlock = response.content.find(b => b.type === 'text');
       if (!textBlock || textBlock.type !== 'text') return { detectedFoods: [], needsConfirmation: true };
 
-      const parsed = JSON.parse(textBlock.text.trim());
+      console.log('Claude response:', textBlock.text.substring(0, 300));
+
+      let jsonText = textBlock.text.trim();
+      // Strip markdown code blocks if present
+      if (jsonText.includes('```')) {
+        jsonText = jsonText.replace(/```json?\n?/g, '').replace(/```/g, '').trim();
+      }
+      const parsed = JSON.parse(jsonText);
       const detectedFoods = parsed.map((item: any) => ({
         name: item.name, confidence: item.confidence,
         suggestedQuantityG: item.quantityG,
