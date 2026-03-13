@@ -101,6 +101,9 @@ export const summaryApi = {
 export const foodApi = {
   search: (query: string, limit?: number) =>
     api.get<FoodItem[]>('/food/search', { params: { q: query, limit } }).then(res => res.data),
+
+  usdaSearch: (query: string) =>
+    api.get<(FoodItem & { source: string })[]>('/food/usda-search', { params: { q: query } }).then(res => res.data),
 };
 
 export const debtApi = {

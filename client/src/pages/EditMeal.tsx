@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { mealApi, foodApi } from '../api/client';
 import { FoodItem, MealItemInput } from '../shared-types';
@@ -11,9 +11,12 @@ export default function EditMeal() {
   const [items, setItems] = useState<MealItemInput[]>([]);
   const [allFoods, setAllFoods] = useState<FoodItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [usdaResults, setUsdaResults] = useState<(FoodItem & { source: string })[]>([]);
+  const [usdaSearching, setUsdaSearching] = useState(false);
   const [loading, setLoading] = useState(false);
   const [fetchingMeal, setFetchingMeal] = useState(true);
   const [error, setError] = useState('');
+  const usdaDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -35,6 +38,18 @@ export default function EditMeal() {
     });
   }, [mealId]);
 
+  useEffect(() => {
+    if (usdaDebounceRef.current) clearTimeout(usdaDebounceRef.current);
+    if (searchQuery.trim().length < 2) { setUsdaResults([]); return; }
+    usdaDebounceRef.current = setTimeout(() => {
+      setUsdaSearching(true);
+      foodApi.usdaSearch(searchQuery.trim())
+        .then(setUsdaResults)
+        .catch(() => setUsdaResults([]))
+        .finally(() => setUsdaSearching(false));
+    }, 500);
+  }, [searchQuery]);
+
   const filteredFoods = searchQuery.trim()
     ? allFoods.filter(f => f.name.toLowerCase().includes(searchQuery.toLowerCase()))
     : allFoods;
@@ -46,6 +61,20 @@ export default function EditMeal() {
       quantityG: food.defaultServingG
     }]);
     setSearchQuery('');
+    setUsdaResults([]);
+  };
+
+  const addUsdaItem = (food: FoodItem & { source: string }) => {
+    setItems([...items, {
+      name: food.name,
+      quantityG: food.defaultServingG,
+      caloriesPer100g: food.caloriesPer100g,
+      proteinPer100g: food.proteinPer100g,
+      carbsPer100g: food.carbsPer100g,
+      fatPer100g: food.fatPer100g
+    }]);
+    setSearchQuery('');
+    setUsdaResults([]);
   };
 
   const removeItem = (index: number) => {
@@ -153,13 +182,13 @@ export default function EditMeal() {
           {/* Add Foods */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Add More Foods ({allFoods.length} available)
+              Add More Foods ({allFoods.length} local · 380k+ USDA)
             </label>
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Filter foods..."
+              placeholder="Search foods... (type 2+ chars for USDA)"
               className="w-full px-3 py-2 border border-gray-300 rounded-md mb-2"
             />
             <div className="border border-gray-200 rounded-md max-h-48 overflow-y-auto">
@@ -167,7 +196,7 @@ export default function EditMeal() {
                 <button
                   key={food.id}
                   onClick={() => addItem(food)}
-                  className="w-full text-left px-4 py-2 hover:bg-indigo-50 border-b border-gray-100 last:border-0"
+                  className="w-full text-left px-4 py-2 hover:bg-indigo-50 border-b border-gray-100"
                 >
                   <div className="font-medium text-sm">{food.name}</div>
                   <div className="text-xs text-gray-500">
@@ -175,7 +204,30 @@ export default function EditMeal() {
                   </div>
                 </button>
               ))}
-              {filteredFoods.length === 0 && (
+              {usdaSearching && (
+                <div className="px-4 py-2 text-xs text-indigo-500">Searching USDA database...</div>
+              )}
+              {usdaResults.length > 0 && (
+                <>
+                  <div className="px-4 py-1 text-xs font-semibold text-gray-400 bg-gray-50 border-b border-gray-100">
+                    USDA FoodData Central
+                  </div>
+                  {usdaResults.map((food) => (
+                    <button
+                      key={food.id}
+                      onClick={() => addUsdaItem(food)}
+                      className="w-full text-left px-4 py-2 hover:bg-green-50 border-b border-gray-100"
+                    >
+                      <div className="font-medium text-sm">{food.name}</div>
+                      <div className="text-xs text-gray-500">
+                        {food.caloriesPer100g} cal / 100g · {food.proteinPer100g}g protein
+                        <span className="ml-1 text-green-600">· USDA</span>
+                      </div>
+                    </button>
+                  ))}
+                </>
+              )}
+              {!usdaSearching && filteredFoods.length === 0 && usdaResults.length === 0 && searchQuery.trim() && (
                 <div className="px-4 py-3 text-sm text-gray-500">No foods found</div>
               )}
             </div>
